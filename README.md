@@ -1,7 +1,7 @@
 
   # HR Management System UI Design
 
-  This is a code bundle for HR Management System UI Design. The original project is available at https://www.figma.com/design/SFwEVHVytIBKpCkPKuaf9p/HR-Management-System-UI-Design.
+  This is a code bundle for the HR Management System UI Design.
 
   ## Running the code
 
