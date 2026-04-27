@@ -19,7 +19,6 @@ const allPermissions = [
   { id: "attendance", label: "Manage Attendance", description: "Track and manage employee attendance" },
   { id: "leaves", label: "Manage Leaves", description: "Approve and manage leave requests" },
   { id: "payroll", label: "Manage Payroll", description: "Process salaries and manage payroll" },
-  { id: "recruitment", label: "Manage Recruitment", description: "Post jobs and manage candidates" },
   { id: "reports", label: "View Reports", description: "Access and generate reports" },
   { id: "settings", label: "System Settings", description: "Configure system settings" },
 ];

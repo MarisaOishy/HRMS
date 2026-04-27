@@ -187,7 +187,7 @@ export default function DashboardPage() {
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Recent Activity</CardTitle>
-            <Link to="/notifications" className="text-sm text-blue-600 hover:underline flex items-center gap-1">
+            <Link to="/reports" className="text-sm text-blue-600 hover:underline flex items-center gap-1">
               View all
               <ArrowRight className="w-4 h-4" />
             </Link>

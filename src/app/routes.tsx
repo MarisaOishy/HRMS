@@ -35,18 +35,9 @@ import PayrollTablePage from "./pages/payroll/PayrollTablePage";
 import DepartmentsPage from "./pages/departments/DepartmentsPage";
 import RolesPage from "./pages/roles/RolesPage";
 
-// Recruitment
-import JobPostingsPage from "./pages/recruitment/JobPostingsPage";
-import CandidatesPage from "./pages/recruitment/CandidatesPage";
-import CandidateDetailsPage from "./pages/recruitment/CandidateDetailsPage";
-
 // Performance
 import PerformanceReviewsPage from "./pages/performance/PerformanceReviewsPage";
 import PerformanceFeedbackPage from "./pages/performance/PerformanceFeedbackPage";
-
-// Notifications & Messaging
-import NotificationsPage from "./pages/notifications/NotificationsPage";
-import MessagesPage from "./pages/messages/MessagesPage";
 
 // Settings
 import ProfileSettingsPage from "./pages/settings/ProfileSettingsPage";
@@ -100,18 +91,9 @@ export const router = createBrowserRouter([
       { path: "departments", Component: DepartmentsPage },
       { path: "roles", Component: RolesPage },
       
-      // Recruitment
-      { path: "recruitment/jobs", Component: JobPostingsPage },
-      { path: "recruitment/candidates", Component: CandidatesPage },
-      { path: "recruitment/candidates/:id", Component: CandidateDetailsPage },
-      
       // Performance
       { path: "performance/reviews", Component: PerformanceReviewsPage },
       { path: "performance/feedback", Component: PerformanceFeedbackPage },
-      
-      // Notifications & Messages
-      { path: "notifications", Component: NotificationsPage },
-      { path: "messages", Component: MessagesPage },
       
       // Settings
       { path: "settings/profile", Component: ProfileSettingsPage },

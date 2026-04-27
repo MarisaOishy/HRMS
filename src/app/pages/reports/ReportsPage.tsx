@@ -45,7 +45,6 @@ export default function ReportsPage() {
                 <SelectItem value="leave">Leave Report</SelectItem>
                 <SelectItem value="payroll">Payroll Report</SelectItem>
                 <SelectItem value="performance">Performance Report</SelectItem>
-                <SelectItem value="recruitment">Recruitment Report</SelectItem>
               </SelectContent>
             </Select>
             <Select value={timePeriod} onValueChange={setTimePeriod}>

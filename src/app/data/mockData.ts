@@ -259,72 +259,6 @@ export const payrollData = [
   },
 ];
 
-export const jobPostings = [
-  {
-    id: "job-1",
-    title: "Senior Frontend Developer",
-    department: "Engineering",
-    location: "San Francisco, CA",
-    type: "Full-time",
-    experience: "5+ years",
-    postedDate: "2026-03-15",
-    status: "Open",
-    applicants: 24,
-    description: "We're looking for an experienced frontend developer...",
-  },
-  {
-    id: "job-2",
-    title: "Product Designer",
-    department: "Design",
-    location: "Remote",
-    type: "Full-time",
-    experience: "3+ years",
-    postedDate: "2026-03-20",
-    status: "Open",
-    applicants: 18,
-    description: "Join our design team to create beautiful products...",
-  },
-  {
-    id: "job-3",
-    title: "Sales Executive",
-    department: "Sales",
-    location: "New York, NY",
-    type: "Full-time",
-    experience: "2+ years",
-    postedDate: "2026-03-10",
-    status: "Closed",
-    applicants: 45,
-    description: "Drive revenue growth through strategic sales...",
-  },
-];
-
-export const candidates = [
-  {
-    id: "cand-1",
-    name: "Alex Thompson",
-    email: "alex.thompson@email.com",
-    phone: "+1 (555) 111-2222",
-    position: "Senior Frontend Developer",
-    experience: "6 years",
-    appliedDate: "2026-03-18",
-    status: "Interview Scheduled",
-    resume: "resume_alex_thompson.pdf",
-    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop",
-  },
-  {
-    id: "cand-2",
-    name: "Rachel Green",
-    email: "rachel.green@email.com",
-    phone: "+1 (555) 222-3333",
-    position: "Product Designer",
-    experience: "4 years",
-    appliedDate: "2026-03-22",
-    status: "Under Review",
-    resume: "resume_rachel_green.pdf",
-    avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150&h=150&fit=crop",
-  },
-];
-
 export const performanceReviews = [
   {
     id: "perf-1",
@@ -355,60 +289,6 @@ export const performanceReviews = [
     reviewDate: "2026-04-02",
     comments: "Great product vision and stakeholder management",
     goals: ["Launch mobile app", "Improve user engagement"],
-  },
-];
-
-export const notifications = [
-  {
-    id: "notif-1",
-    title: "Leave Request Approved",
-    message: "Your leave request for April 15-19 has been approved",
-    type: "success",
-    date: "2026-04-05 10:30 AM",
-    read: false,
-  },
-  {
-    id: "notif-2",
-    title: "Payslip Available",
-    message: "Your payslip for March 2026 is now available",
-    type: "info",
-    date: "2026-04-01 09:00 AM",
-    read: true,
-  },
-  {
-    id: "notif-3",
-    title: "Performance Review Due",
-    message: "Please complete your self-assessment by April 10",
-    type: "warning",
-    date: "2026-04-03 02:15 PM",
-    read: false,
-  },
-  {
-    id: "notif-4",
-    title: "New Job Opening",
-    message: "Senior Frontend Developer position is now open",
-    type: "info",
-    date: "2026-03-15 11:00 AM",
-    read: true,
-  },
-];
-
-export const messages = [
-  {
-    id: "msg-1",
-    from: "Priya Patel",
-    fromId: "EMP005",
-    message: "Hi, can you review the leave policy document?",
-    timestamp: "2026-04-06 09:30 AM",
-    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop",
-  },
-  {
-    id: "msg-2",
-    from: "Michael Chen",
-    fromId: "EMP002",
-    message: "Team meeting at 2 PM today in Conference Room A",
-    timestamp: "2026-04-06 08:45 AM",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop",
   },
 ];
 
