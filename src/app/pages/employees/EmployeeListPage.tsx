@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { Card, CardContent } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
@@ -19,13 +19,61 @@ import {
   TableHeader,
   TableRow,
 } from "../../components/ui/table";
-import { Search, Plus, Filter, Download, Edit, Eye, Trash2 } from "lucide-react";
-import { employees } from "../../data/mockData";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../../components/ui/alert-dialog";
+import { Search, Plus, Filter, Download, Edit, Eye, Trash2, Loader2 } from "lucide-react";
+import { getEmployees, deleteEmployee } from "../../../lib/services/employeeService";
+import type { Employee } from "../../../lib/types/database";
+import { toast } from "sonner";
 
 export default function EmployeeListPage() {
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [deleting, setDeleting] = useState<string | null>(null);
 
+  // Fetch employees from Supabase
+  const fetchEmployees = async () => {
+    try {
+      setLoading(true);
+      const data = await getEmployees();
+      setEmployees(data);
+    } catch (error: any) {
+      toast.error("Failed to load employees: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  // Delete employee
+  const handleDelete = async (id: string, name: string) => {
+    setDeleting(id);
+    try {
+      await deleteEmployee(id);
+      setEmployees((prev) => prev.filter((e) => e.id !== id));
+      toast.success(`${name} has been removed`);
+    } catch (error: any) {
+      toast.error("Failed to delete employee: " + error.message);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  // Client-side filtering
   const filteredEmployees = employees.filter((emp) => {
     const matchesSearch =
       emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -93,84 +141,125 @@ export default function EmployeeListPage() {
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredEmployees.map((employee) => (
-                  <TableRow key={employee.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={employee.avatar}
-                          alt={employee.name}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                        <div>
-                          <p className="font-medium text-gray-900">{employee.name}</p>
-                          <p className="text-sm text-gray-500">{employee.email}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">{employee.id}</TableCell>
-                    <TableCell>{employee.department}</TableCell>
-                    <TableCell>{employee.role}</TableCell>
-                    <TableCell>{employee.phone}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={employee.status === "Active" ? "default" : "secondary"}
-                      >
-                        {employee.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/employees/profile/${employee.id}`}>
-                            <Eye className="w-4 h-4" />
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/employees/edit/${employee.id}`}>
-                            <Edit className="w-4 h-4" />
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                <span className="ml-3 text-gray-500">Loading employees...</span>
+              </div>
+            ) : filteredEmployees.length === 0 ? (
+              <div className="text-center py-16">
+                <p className="text-gray-500 text-lg">No employees found</p>
+                <p className="text-gray-400 text-sm mt-1">Try adjusting your search or filters</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Employee</TableHead>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Department</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredEmployees.map((employee) => (
+                    <TableRow key={employee.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={employee.avatar}
+                            alt={employee.name}
+                            className="w-10 h-10 rounded-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                `https://ui-avatars.com/api/?name=${encodeURIComponent(employee.name)}&background=3b82f6&color=fff`;
+                            }}
+                          />
+                          <div>
+                            <p className="font-medium text-gray-900">{employee.name}</p>
+                            <p className="text-sm text-gray-500">{employee.email}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">{employee.id}</TableCell>
+                      <TableCell>{employee.department}</TableCell>
+                      <TableCell>{employee.role}</TableCell>
+                      <TableCell>{employee.phone}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={employee.status === "Active" ? "default" : "secondary"}
+                        >
+                          {employee.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link to={`/employees/profile/${employee.id}`}>
+                              <Eye className="w-4 h-4" />
+                            </Link>
+                          </Button>
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link to={`/employees/edit/${employee.id}`}>
+                              <Edit className="w-4 h-4" />
+                            </Link>
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700"
+                                disabled={deleting === employee.id}
+                              >
+                                {deleting === employee.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Employee</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete <strong>{employee.name}</strong>?
+                                  This action cannot be undone and will remove all associated records.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDelete(employee.id, employee.name)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-600">
-          Showing {filteredEmployees.length} of {employees.length} employees
-        </p>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" disabled>
-            Previous
-          </Button>
-          <Button variant="outline" size="sm">
-            Next
-          </Button>
+      {/* Footer count */}
+      {!loading && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-600">
+            Showing {filteredEmployees.length} of {employees.length} employees
+          </p>
         </div>
-      </div>
+      )}
     </div>
   );
 }
