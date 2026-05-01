@@ -84,6 +84,72 @@ export default function EmployeeListPage() {
     return matchesSearch && matchesDepartment;
   });
 
+  // Export filtered employees as CSV
+  const handleExport = () => {
+    if (filteredEmployees.length === 0) {
+      toast.error("No employees to export");
+      return;
+    }
+
+    const headers = [
+      "Employee ID",
+      "Name",
+      "Email",
+      "Phone",
+      "Department",
+      "Role",
+      "Status",
+      "Join Date",
+      "Salary",
+      "Gender",
+      "Date of Birth",
+      "Address",
+      "Emergency Contact",
+    ];
+
+    const escapeCSV = (value: string | number) => {
+      const str = String(value ?? "");
+      if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    const rows = filteredEmployees.map((emp) => [
+      emp.id,
+      emp.name,
+      emp.email,
+      emp.phone,
+      emp.department,
+      emp.role,
+      emp.status,
+      emp.join_date,
+      emp.salary,
+      emp.gender,
+      emp.date_of_birth,
+      emp.address,
+      emp.emergency_contact,
+    ]);
+
+    const csvContent = [
+      headers.map(escapeCSV).join(","),
+      ...rows.map((row) => row.map(escapeCSV).join(",")),
+    ].join("\n");
+
+    const blob = new Blob(["\uFEFF" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `employees_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${filteredEmployees.length} employee(s) to CSV`);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -129,7 +195,7 @@ export default function EmployeeListPage() {
                 <SelectItem value="Human Resources">HR</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleExport}>
               <Download className="w-4 h-4 mr-2" />
               Export
             </Button>

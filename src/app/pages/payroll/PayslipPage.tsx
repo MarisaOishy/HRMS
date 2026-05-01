@@ -1,16 +1,107 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
 import { Card, CardContent } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
-import { ArrowLeft, Download, Printer } from "lucide-react";
-import { payrollData, employees } from "../../data/mockData";
+import { ArrowLeft, Download, Loader2, Printer } from "lucide-react";
+import { toast } from "sonner";
+import { getPayslip } from "../../../lib/services/payrollService";
+import { getEmployeeById } from "../../../lib/services/employeeService";
+import type { Employee, PayrollRecord } from "../../../lib/types/database";
 
 export default function PayslipPage() {
   const { id } = useParams();
-  const payroll = payrollData.find((p) => p.id === id);
-  const employee = payroll ? employees.find((e) => e.id === payroll.employeeId) : null;
+  const [loading, setLoading] = useState(true);
+  const [payroll, setPayroll] = useState<PayrollRecord | null>(null);
+  const [employee, setEmployee] = useState<Employee | null>(null);
+
+  const fetchPayslip = useCallback(async () => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const payrollRow = await getPayslip(id);
+      setPayroll(payrollRow);
+      const employeeRow = await getEmployeeById(payrollRow.employee_id).catch(() => null);
+      setEmployee(employeeRow);
+    } catch (error: any) {
+      toast.error("Failed to load payslip: " + error.message);
+      setPayroll(null);
+      setEmployee(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchPayslip();
+  }, [fetchPayslip]);
+
+  const deductionBreakdown = useMemo(() => {
+    if (!payroll) return { tax: 0, social: 0, health: 0 };
+    return {
+      tax: payroll.deductions * 0.6,
+      social: payroll.deductions * 0.3,
+      health: payroll.deductions * 0.1,
+    };
+  }, [payroll]);
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleDownload = () => {
+    if (!payroll) return;
+    const employeeName = employee?.name ?? payroll.employee_name;
+    const content = [
+      "HRMS Pro - Payslip",
+      "-------------------",
+      `Employee: ${employeeName}`,
+      `Employee ID: ${payroll.employee_id}`,
+      `Department: ${employee?.department ?? "Unknown"}`,
+      `Role: ${employee?.role ?? "Unknown"}`,
+      `Month: ${payroll.month}`,
+      `Pay Date: ${payroll.pay_date}`,
+      `Status: ${payroll.status}`,
+      "",
+      `Basic Salary: $${payroll.basic_salary.toLocaleString()}`,
+      `Allowances: $${payroll.allowances.toLocaleString()}`,
+      `Deductions: $${payroll.deductions.toLocaleString()}`,
+      `Net Salary: $${payroll.net_salary.toLocaleString()}`,
+    ].join("\n");
+
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `payslip_${payroll.employee_id}_${payroll.month}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("Payslip downloaded");
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-gray-500">
+        <Loader2 className="w-5 h-5 animate-spin mr-2" />
+        Loading payslip...
+      </div>
+    );
+  }
 
   if (!payroll || !employee) {
-    return <div>Payslip not found</div>;
+    return (
+      <div className="space-y-4">
+        <Link to="/payroll" className="text-sm text-blue-600 hover:underline">
+          Back to payroll
+        </Link>
+        <div className="text-gray-600">Payslip not found.</div>
+      </div>
+    );
   }
 
   return (
@@ -25,13 +116,13 @@ export default function PayslipPage() {
           Back to payroll
         </Link>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={handlePrint}>
             <Printer className="w-4 h-4 mr-2" />
             Print
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleDownload}>
             <Download className="w-4 h-4 mr-2" />
-            Download PDF
+            Download
           </Button>
         </div>
       </div>
@@ -83,7 +174,7 @@ export default function PayslipPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Pay Date:</span>
-                  <span className="font-medium">{payroll.payDate}</span>
+                  <span className="font-medium">{payroll.pay_date}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Payment Method:</span>
@@ -104,7 +195,7 @@ export default function PayslipPage() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-700">Basic Salary</span>
-                  <span className="font-medium">${payroll.basicSalary.toLocaleString()}</span>
+                  <span className="font-medium">${payroll.basic_salary.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-700">Allowances</span>
@@ -112,7 +203,7 @@ export default function PayslipPage() {
                 </div>
                 <div className="border-t pt-3 flex justify-between font-semibold">
                   <span>Total Earnings</span>
-                  <span>${(payroll.basicSalary + payroll.allowances).toLocaleString()}</span>
+                  <span>${(payroll.basic_salary + payroll.allowances).toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -122,15 +213,15 @@ export default function PayslipPage() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-700">Income Tax</span>
-                  <span className="font-medium">${(payroll.deductions * 0.6).toLocaleString()}</span>
+                  <span className="font-medium">${deductionBreakdown.tax.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-700">Social Security</span>
-                  <span className="font-medium">${(payroll.deductions * 0.3).toLocaleString()}</span>
+                  <span className="font-medium">${deductionBreakdown.social.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-700">Health Insurance</span>
-                  <span className="font-medium">${(payroll.deductions * 0.1).toLocaleString()}</span>
+                  <span className="font-medium">${deductionBreakdown.health.toLocaleString()}</span>
                 </div>
                 <div className="border-t pt-3 flex justify-between font-semibold">
                   <span>Total Deductions</span>
@@ -143,7 +234,7 @@ export default function PayslipPage() {
           {/* Net Pay */}
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 text-center">
             <p className="text-gray-700 mb-2">Net Pay</p>
-            <p className="text-4xl font-bold text-gray-900">${payroll.netSalary.toLocaleString()}</p>
+            <p className="text-4xl font-bold text-gray-900">${payroll.net_salary.toLocaleString()}</p>
             <p className="text-sm text-gray-600 mt-2">Amount payable for {payroll.month}</p>
           </div>
 

@@ -1,75 +1,163 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
-import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select";
+import { ArrowLeft, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import {
+  getAttendanceByEmployee,
+  getAllEmployees,
+} from "../../../lib/services/attendanceService";
+import type { AttendanceRecord } from "../../../lib/types/database";
+import { toast } from "sonner";
 
 const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const months = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];
 
-// Mock attendance data for calendar
-const attendanceData: Record<string, "present" | "absent" | "leave" | "holiday"> = {
-  "2026-04-01": "present",
-  "2026-04-02": "present",
-  "2026-04-03": "present",
-  "2026-04-04": "leave",
-  "2026-04-05": "holiday",
-  "2026-04-06": "present",
-  "2026-04-07": "present",
-  "2026-04-08": "present",
-  "2026-04-09": "present",
-  "2026-04-10": "present",
-  "2026-04-11": "absent",
-  "2026-04-12": "holiday",
-  "2026-04-13": "present",
-  "2026-04-14": "present",
-};
+type DayStatus = "Present" | "Late" | "Present (Late)" | "Absent" | "Leave" | "Holiday";
 
 export default function AttendanceCalendar() {
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 3, 6)); // April 6, 2026
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [loading, setLoading] = useState(true);
+  const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [employees, setEmployees] = useState<{ id: string; name: string }[]>([]);
+  const [selectedEmployee, setSelectedEmployee] = useState<string>("");
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
-
-  const firstDayOfMonth = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
 
-  const prevMonth = () => {
-    setCurrentDate(new Date(year, month - 1, 1));
-  };
+  // ── Fetch employees on mount ──────────────────────────────
+  useEffect(() => {
+    (async () => {
+      try {
+        const emps = await getAllEmployees();
+        setEmployees(emps.map((e) => ({ id: e.id, name: e.name })));
+        if (emps.length > 0 && !selectedEmployee) {
+          setSelectedEmployee(emps[0].id);
+        }
+      } catch (error: any) {
+        toast.error("Failed to load employees: " + error.message);
+      }
+    })();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const nextMonth = () => {
-    setCurrentDate(new Date(year, month + 1, 1));
-  };
+  // ── Fetch records when employee changes ───────────────────
+  useEffect(() => {
+    if (!selectedEmployee) return;
+    (async () => {
+      try {
+        setLoading(true);
+        const data = await getAttendanceByEmployee(selectedEmployee);
+        setRecords(data);
+      } catch (error: any) {
+        toast.error("Failed to load attendance: " + error.message);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [selectedEmployee]);
 
-  const getStatusColor = (status?: "present" | "absent" | "leave" | "holiday") => {
+  // ── Build a map of date → status for the current month ────
+  const statusMap = useMemo(() => {
+    const map = new Map<number, DayStatus>();
+    for (const rec of records) {
+      const d = new Date(rec.date + "T00:00:00");
+      if (d.getFullYear() === year && d.getMonth() === month) {
+        const status = rec.status as DayStatus;
+        map.set(d.getDate(), status);
+      }
+    }
+    return map;
+  }, [records, year, month]);
+
+  // ── Monthly stats ─────────────────────────────────────────
+  const stats = useMemo(() => {
+    const today = new Date();
+    // Only count working days up to today (Mon–Fri)
+    let workingDays = 0;
+    const limit = year === today.getFullYear() && month === today.getMonth()
+      ? Math.min(today.getDate(), daysInMonth)
+      : daysInMonth;
+    for (let d = 1; d <= limit; d++) {
+      const day = new Date(year, month, d).getDay();
+      if (day !== 0 && day !== 6) workingDays++;
+    }
+
+    let present = 0;
+    let late = 0;
+    let absent = 0;
+    let leave = 0;
+
+    statusMap.forEach((status) => {
+      switch (status) {
+        case "Present":
+          present++;
+          break;
+        case "Present (Late)":
+        case "Late":
+          present++;
+          late++;
+          break;
+        case "Absent":
+          absent++;
+          break;
+        case "Leave":
+          leave++;
+          break;
+      }
+    });
+
+    // Absent = working days with no record at all (and not in the future)
+    const recordedDays = present + late + absent + leave;
+    const impliedAbsent = Math.max(0, workingDays - recordedDays);
+    absent += impliedAbsent;
+
+    const attendanceRate = workingDays > 0
+      ? (((present + late) / workingDays) * 100).toFixed(0)
+      : "0";
+
+    return { present, late, absent, leave, attendanceRate };
+  }, [statusMap, year, month, daysInMonth]);
+
+  // ── Navigation ────────────────────────────────────────────
+  const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+  const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+
+  // ── Status color helper ───────────────────────────────────
+  const getStatusColor = (status?: DayStatus) => {
     switch (status) {
-      case "present":
+      case "Present":
         return "bg-green-100 text-green-700 border-green-300";
-      case "absent":
-        return "bg-red-100 text-red-700 border-red-300";
-      case "leave":
+      case "Present (Late)":
+      case "Late":
         return "bg-orange-100 text-orange-700 border-orange-300";
-      case "holiday":
+      case "Absent":
+        return "bg-red-100 text-red-700 border-red-300";
+      case "Leave":
         return "bg-blue-100 text-blue-700 border-blue-300";
+      case "Holiday":
+        return "bg-purple-100 text-purple-700 border-purple-300";
       default:
         return "bg-white text-gray-900 border-gray-200";
     }
   };
+
+  // ── Build calendar cells ──────────────────────────────────
+  const todayDate = new Date();
+  const isCurrentMonth =
+    todayDate.getFullYear() === year && todayDate.getMonth() === month;
 
   const days = [];
   for (let i = 0; i < firstDayOfMonth; i++) {
@@ -77,9 +165,11 @@ export default function AttendanceCalendar() {
   }
 
   for (let day = 1; day <= daysInMonth; day++) {
-    const dateString = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    const status = attendanceData[dateString];
-    const isToday = day === 6; // April 6, 2026
+    const status = statusMap.get(day);
+    const isToday = isCurrentMonth && todayDate.getDate() === day;
+    const displayStatus = status
+      ? status.charAt(0).toUpperCase() + status.slice(1)
+      : undefined;
 
     days.push(
       <div
@@ -89,8 +179,8 @@ export default function AttendanceCalendar() {
         }`}
       >
         <div className="font-semibold">{day}</div>
-        {status && (
-          <div className="text-xs mt-1 capitalize">{status}</div>
+        {displayStatus && (
+          <div className="text-xs mt-1">{displayStatus}</div>
         )}
       </div>
     );
@@ -108,8 +198,30 @@ export default function AttendanceCalendar() {
           Back to attendance
         </Link>
         <h1 className="text-3xl font-semibold text-gray-900">Attendance Calendar</h1>
-        <p className="text-gray-600 mt-1">View your attendance history</p>
+        <p className="text-gray-600 mt-1">View attendance history by employee</p>
       </div>
+
+      {/* Employee selector */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="w-full sm:w-64">
+              <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select employee" />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees.map((emp) => (
+                    <SelectItem key={emp.id} value={emp.id}>
+                      {emp.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Legend */}
       <Card>
@@ -120,16 +232,16 @@ export default function AttendanceCalendar() {
               <span className="text-sm text-gray-700">Present</span>
             </div>
             <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-orange-100 border border-orange-300" />
+              <span className="text-sm text-gray-700">Late</span>
+            </div>
+            <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-red-100 border border-red-300" />
               <span className="text-sm text-gray-700">Absent</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded bg-orange-100 border border-orange-300" />
-              <span className="text-sm text-gray-700">Leave</span>
-            </div>
-            <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-blue-100 border border-blue-300" />
-              <span className="text-sm text-gray-700">Holiday</span>
+              <span className="text-sm text-gray-700">Leave</span>
             </div>
           </div>
         </CardContent>
@@ -153,17 +265,26 @@ export default function AttendanceCalendar() {
           </div>
         </CardHeader>
         <CardContent>
-          {/* Days of week */}
-          <div className="grid grid-cols-7 gap-2 mb-2">
-            {daysOfWeek.map((day) => (
-              <div key={day} className="text-center font-semibold text-gray-700 p-2">
-                {day}
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+              <span className="ml-3 text-gray-500">Loading calendar...</span>
+            </div>
+          ) : (
+            <>
+              {/* Days of week */}
+              <div className="grid grid-cols-7 gap-2 mb-2">
+                {daysOfWeek.map((day) => (
+                  <div key={day} className="text-center font-semibold text-gray-700 p-2">
+                    {day}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {/* Calendar days */}
-          <div className="grid grid-cols-7 gap-2">{days}</div>
+              {/* Calendar days */}
+              <div className="grid grid-cols-7 gap-2">{days}</div>
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -172,25 +293,25 @@ export default function AttendanceCalendar() {
         <Card>
           <CardContent className="p-6">
             <p className="text-sm text-gray-600">Present Days</p>
-            <p className="text-3xl font-semibold text-gray-900 mt-2">12</p>
+            <p className="text-3xl font-semibold text-gray-900 mt-2">{stats.present + stats.late}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
             <p className="text-sm text-gray-600">Absent Days</p>
-            <p className="text-3xl font-semibold text-gray-900 mt-2">1</p>
+            <p className="text-3xl font-semibold text-gray-900 mt-2">{stats.absent}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
             <p className="text-sm text-gray-600">Leave Days</p>
-            <p className="text-3xl font-semibold text-gray-900 mt-2">1</p>
+            <p className="text-3xl font-semibold text-gray-900 mt-2">{stats.leave}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-6">
             <p className="text-sm text-gray-600">Attendance Rate</p>
-            <p className="text-3xl font-semibold text-gray-900 mt-2">92%</p>
+            <p className="text-3xl font-semibold text-gray-900 mt-2">{stats.attendanceRate}%</p>
           </CardContent>
         </Card>
       </div>

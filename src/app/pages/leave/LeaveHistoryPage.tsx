@@ -1,13 +1,60 @@
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
-import { Plus } from "lucide-react";
-import { leaveRequests, leaveBalances } from "../../data/mockData";
+import { Loader2, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { useAuth } from "../../contexts/AuthContext";
+import {
+  getEmployeeByEmailForLeave,
+  getLeaveBalanceByEmployee,
+  getLeaveRequestsByEmployee,
+} from "../../../lib/services/leaveService";
+import type { LeaveBalance, LeaveRequest } from "../../../lib/types/database";
 
 export default function LeaveHistoryPage() {
-  const balance = leaveBalances[0]; // Current user
-  const userLeaves = leaveRequests.filter((r) => r.employeeId === "EMP001");
+  const { user } = useAuth();
+
+  const [loading, setLoading] = useState(true);
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+  const [balance, setBalance] = useState<LeaveBalance | null>(null);
+  const [userLeaves, setUserLeaves] = useState<LeaveRequest[]>([]);
+
+  const fetchData = useCallback(async () => {
+    if (!user?.email) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const employee = await getEmployeeByEmailForLeave(user.email);
+      if (!employee) {
+        setEmployeeId(null);
+        setUserLeaves([]);
+        setBalance(null);
+        return;
+      }
+
+      setEmployeeId(employee.id);
+
+      const [requests, leaveBalance] = await Promise.all([
+        getLeaveRequestsByEmployee(employee.id),
+        getLeaveBalanceByEmployee(employee.id).catch(() => null),
+      ]);
+      setUserLeaves(requests);
+      setBalance(leaveBalance);
+    } catch (error: any) {
+      toast.error("Failed to load leave history: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.email]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   return (
     <div className="space-y-6">
@@ -31,23 +78,34 @@ export default function LeaveHistoryPage() {
           <CardTitle>Your Leave Balance</CardTitle>
         </CardHeader>
         <CardContent>
+          {loading ? (
+            <div className="flex items-center justify-center py-8 text-gray-500">
+              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              Loading leave balance...
+            </div>
+          ) : !employeeId ? (
+            <p className="text-sm text-amber-700 bg-amber-50 rounded-md p-3">
+              Your account is not linked to an employee profile. Contact HR.
+            </p>
+          ) : (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="text-center p-6 bg-blue-50 rounded-lg">
-              <p className="text-4xl font-semibold text-blue-700">{balance.annualLeave}</p>
+              <p className="text-4xl font-semibold text-blue-700">{balance?.annual_leave ?? 0}</p>
               <p className="text-sm text-gray-600 mt-2">Annual Leave</p>
               <p className="text-xs text-gray-500 mt-1">Available days</p>
             </div>
             <div className="text-center p-6 bg-green-50 rounded-lg">
-              <p className="text-4xl font-semibold text-green-700">{balance.sickLeave}</p>
+              <p className="text-4xl font-semibold text-green-700">{balance?.sick_leave ?? 0}</p>
               <p className="text-sm text-gray-600 mt-2">Sick Leave</p>
               <p className="text-xs text-gray-500 mt-1">Available days</p>
             </div>
             <div className="text-center p-6 bg-purple-50 rounded-lg">
-              <p className="text-4xl font-semibold text-purple-700">{balance.casualLeave}</p>
+              <p className="text-4xl font-semibold text-purple-700">{balance?.casual_leave ?? 0}</p>
               <p className="text-sm text-gray-600 mt-2">Casual Leave</p>
               <p className="text-xs text-gray-500 mt-1">Available days</p>
             </div>
           </div>
+          )}
         </CardContent>
       </Card>
 
@@ -57,8 +115,14 @@ export default function LeaveHistoryPage() {
           <CardTitle>Leave Requests</CardTitle>
         </CardHeader>
         <CardContent>
+          {loading ? (
+            <div className="flex items-center justify-center py-12 text-gray-500">
+              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              Loading leave requests...
+            </div>
+          ) : (
           <div className="space-y-4">
-            {userLeaves.length > 0 ? (
+            {employeeId && userLeaves.length > 0 ? (
               userLeaves.map((leave) => (
                 <div
                   key={leave.id}
@@ -80,15 +144,10 @@ export default function LeaveHistoryPage() {
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-900 font-medium">
-                      {leave.startDate} to {leave.endDate} ({leave.days} days)
+                      {leave.start_date} to {leave.end_date} ({leave.days} days)
                     </p>
                     <p className="text-sm text-gray-600 mt-1">{leave.reason}</p>
-                    <p className="text-xs text-gray-400 mt-2">Applied on {leave.appliedDate}</p>
-                  </div>
-                  <div className="flex gap-2 mt-4 md:mt-0">
-                    <Button variant="outline" size="sm">
-                      View Details
-                    </Button>
+                    <p className="text-xs text-gray-400 mt-2">Applied on {leave.applied_date}</p>
                   </div>
                 </div>
               ))
@@ -101,6 +160,7 @@ export default function LeaveHistoryPage() {
               </div>
             )}
           </div>
+          )}
         </CardContent>
       </Card>
     </div>

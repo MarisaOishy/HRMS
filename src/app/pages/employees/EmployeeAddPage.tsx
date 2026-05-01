@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
@@ -6,8 +6,8 @@ import { Label } from "../../components/ui/label";
 import { Button } from "../../components/ui/button";
 import { Textarea } from "../../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
-import { ArrowLeft, Upload, Loader2 } from "lucide-react";
-import { createEmployee } from "../../../lib/services/employeeService";
+import { ArrowLeft, Upload, Loader2, X } from "lucide-react";
+import { createEmployee, uploadAvatar } from "../../../lib/services/employeeService";
 import { toast } from "sonner";
 
 const deptMap: Record<string, string> = {
@@ -32,6 +32,34 @@ export default function EmployeeAddPage() {
   const [salary, setSalary] = useState("");
   const [emergencyPhone, setEmergencyPhone] = useState("");
 
+  // Avatar upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file (PNG, JPG, etc.)");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be smaller than 5 MB");
+      return;
+    }
+    setAvatarFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setAvatarPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const removeAvatar = () => {
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!firstName || !lastName || !email || !employeeId || !joinDate || !department || !role || !salary) {
@@ -39,12 +67,22 @@ export default function EmployeeAddPage() {
     }
     setLoading(true);
     try {
+      // Upload avatar if one was selected, otherwise use generated avatar
+      let avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(firstName + " " + lastName)}&background=3b82f6&color=fff&size=150`;
+      if (avatarFile) {
+        try {
+          avatarUrl = await uploadAvatar(avatarFile, employeeId);
+        } catch {
+          toast.error("Avatar upload failed, using default avatar");
+        }
+      }
+
       await createEmployee({
         id: employeeId, name: `${firstName} ${lastName}`, email, phone,
         date_of_birth: dob || "", gender: gender || "", address: address || "",
         join_date: joinDate, department: deptMap[department] || department, role,
         salary: Number(salary), status: "Active",
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(firstName + " " + lastName)}&background=3b82f6&color=fff&size=150`,
+        avatar: avatarUrl,
         emergency_contact: emergencyPhone || "",
       });
       toast.success("Employee added successfully!");
@@ -68,10 +106,46 @@ export default function EmployeeAddPage() {
           <CardHeader><CardTitle>Personal Information</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col items-center gap-4 mb-6">
-              <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
-                <Upload className="w-8 h-8 text-gray-400" />
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
+              {/* Avatar preview / placeholder */}
+              <div className="relative">
+                {avatarPreview ? (
+                  <>
+                    <img
+                      src={avatarPreview}
+                      alt="Avatar preview"
+                      className="w-24 h-24 rounded-full object-cover border-2 border-blue-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeAvatar}
+                      className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 transition-colors"
+                      title="Remove photo"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </>
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
+                    <Upload className="w-8 h-8 text-gray-400" />
+                  </div>
+                )}
               </div>
-              <Button type="button" variant="outline" size="sm">Upload Photo</Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {avatarPreview ? "Change Photo" : "Upload Photo"}
+              </Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
