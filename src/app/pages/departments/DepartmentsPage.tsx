@@ -42,10 +42,15 @@ export default function DepartmentsPage() {
     [employees]
   );
 
-  const employeeCountByDepartment = useMemo(() => {
-    const map = new Map<string, number>();
+  const departmentStats = useMemo(() => {
+    const map = new Map<string, { count: number; totalSalary: number; active: number; onLeave: number }>();
     employees.forEach((emp) => {
-      map.set(emp.department, (map.get(emp.department) ?? 0) + 1);
+      const stats = map.get(emp.department) || { count: 0, totalSalary: 0, active: 0, onLeave: 0 };
+      stats.count += 1;
+      stats.totalSalary += emp.salary || 0;
+      if (emp.status === "Active") stats.active += 1;
+      if (emp.status === "On Leave") stats.onLeave += 1;
+      map.set(emp.department, stats);
     });
     return map;
   }, [employees]);
@@ -108,7 +113,7 @@ export default function DepartmentsPage() {
       return;
     }
 
-    const employeesCount = employeeCountByDepartment.get(trimmedName) ?? editingDepartment?.employees_count ?? 0;
+    const employeesCount = departmentStats.get(trimmedName)?.count ?? editingDepartment?.employees_count ?? 0;
 
     setSaving(true);
     try {
@@ -188,8 +193,10 @@ export default function DepartmentsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {departments.map((dept) => {
-            const employeeCount = employeeCountByDepartment.get(dept.name) ?? dept.employees_count ?? 0;
-            const avgSalary = employeeCount > 0 ? Math.round(dept.budget / employeeCount) : 0;
+            const stats = departmentStats.get(dept.name) || { count: 0, totalSalary: 0, active: 0, onLeave: 0 };
+            const employeeCount = stats.count;
+            const avgSalary = employeeCount > 0 ? Math.round(stats.totalSalary / employeeCount) : 0;
+            const actualAnnualPayroll = stats.totalSalary * 12;
 
             return (
               <Card key={dept.id}>
@@ -220,11 +227,17 @@ export default function DepartmentsPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
-                    <Users className="w-8 h-8 text-blue-600" />
-                    <div>
-                      <p className="text-2xl font-semibold text-gray-900">{employeeCount}</p>
-                      <p className="text-sm text-gray-600">Employees</p>
+                  <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Users className="w-8 h-8 text-blue-600" />
+                      <div>
+                        <p className="text-2xl font-semibold text-gray-900">{employeeCount}</p>
+                        <p className="text-sm text-gray-600">Total Employees</p>
+                      </div>
+                    </div>
+                    <div className="text-right text-sm">
+                      <p className="text-green-600 font-medium">{stats.active} Active</p>
+                      <p className="text-orange-500 font-medium">{stats.onLeave} On Leave</p>
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -233,7 +246,13 @@ export default function DepartmentsPage() {
                       <span className="font-medium">{formatBDT(dept.budget)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Avg Salary</span>
+                      <span className="text-gray-600">Actual Annual Payroll</span>
+                      <span className={`font-medium ${actualAnnualPayroll > dept.budget ? 'text-red-600' : 'text-green-600'}`}>
+                        {formatBDT(actualAnnualPayroll)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Avg Monthly Salary</span>
                       <span className="font-medium">{formatBDT(avgSalary)}</span>
                     </div>
                   </div>
