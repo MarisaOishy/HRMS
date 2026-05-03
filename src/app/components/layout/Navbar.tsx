@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import {
   Search,
@@ -7,8 +7,6 @@ import {
   Settings,
   User,
   LogOut,
-  Moon,
-  Sun,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -28,9 +26,17 @@ interface NavbarProps {
 }
 
 export default function Navbar({ onMenuClick }: NavbarProps) {
-  const [darkMode, setDarkMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Remove the dark mode class completely if it was set
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove("dark");
+    localStorage.removeItem("theme");
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -41,12 +47,20 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
     }
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/employees?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery(""); // Optional: clear after search or keep it
+    }
+  };
+
   const userEmail = user?.email || "hr.admin@banglahr.com.bd";
   const userName = user?.user_metadata?.name || userEmail.split("@")[0];
   const userInitials = userName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6">
+    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 transition-colors">
       {/* Left side */}
       <div className="flex items-center gap-4 flex-1">
         <button
@@ -58,14 +72,16 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
 
         {/* Search */}
         <div className="hidden md:flex items-center flex-1 max-w-md">
-          <div className="relative w-full">
+          <form onSubmit={handleSearch} className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
               type="search"
               placeholder="Search employees, documents..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 bg-gray-50 border-gray-200"
             />
-          </div>
+          </form>
         </div>
       </div>
 
@@ -74,18 +90,6 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
         {/* Search icon for mobile */}
         <button className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors">
           <Search className="w-5 h-5 text-gray-600" />
-        </button>
-
-        {/* Theme toggle */}
-        <button
-          onClick={() => setDarkMode(!darkMode)}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          {darkMode ? (
-            <Sun className="w-5 h-5 text-gray-600" />
-          ) : (
-            <Moon className="w-5 h-5 text-gray-600" />
-          )}
         </button>
 
         {/* Bell icon */}

@@ -38,11 +38,20 @@ import { toast } from "sonner";
 export default function EmployeeListPage() {
   const [searchParams] = useSearchParams();
   const departmentFromQuery = searchParams.get("department");
+  const searchFromQuery = searchParams.get("search");
+
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(searchFromQuery || "");
   const [departmentFilter, setDepartmentFilter] = useState(departmentFromQuery || "all");
   const [deleting, setDeleting] = useState<string | null>(null);
+
+  // Sync search parameter changes if navigated from navbar
+  useEffect(() => {
+    if (searchFromQuery !== null) {
+      setSearchTerm(searchFromQuery);
+    }
+  }, [searchFromQuery]);
 
   // Fetch employees from Supabase
   const fetchEmployees = async () => {
