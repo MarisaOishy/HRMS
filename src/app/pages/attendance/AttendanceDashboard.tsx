@@ -50,7 +50,9 @@ export default function AttendanceDashboard() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const todayISO = new Date().toISOString().split("T")[0];
+  // todayISO is derived from currentTime so it automatically
+  // changes when the clock crosses midnight
+  const todayISO = currentTime.toISOString().split("T")[0];
 
   // ── Toggle Handlers ───────────────────────────────────────
   const handleToggleCheckIn = async (employeeId: string) => {
@@ -100,6 +102,16 @@ export default function AttendanceDashboard() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Re-fetch when the date changes (midnight rollover)
+  const [previousDate, setPreviousDate] = useState(todayISO);
+  useEffect(() => {
+    if (todayISO !== previousDate) {
+      setPreviousDate(todayISO);
+      // Date has changed — re-fetch attendance for the new day
+      fetchData();
+    }
+  }, [todayISO, previousDate, fetchData]);
 
   // ── Time Formatting Helpers ───────────────────────────────
   const formatTimeForInput = (timeString: string) => {

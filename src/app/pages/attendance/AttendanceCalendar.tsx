@@ -1,16 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Link } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../components/ui/select";
-import { ArrowLeft, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Search, X } from "lucide-react";
 import {
   getAttendanceByEmployee,
   getAllEmployees,
@@ -33,10 +26,49 @@ export default function AttendanceCalendar() {
   const [employees, setEmployees] = useState<{ id: string; name: string }[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>("");
 
+  // ── Search state ──────────────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = new Date(year, month, 1).getDay();
+
+  // ── Click-outside to close suggestions ────────────────────
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // ── Filtered employees based on search query ──────────────
+  const filteredEmployees = useMemo(() => {
+    if (!searchQuery.trim()) return employees;
+    const query = searchQuery.toLowerCase().trim();
+    return employees.filter((emp) =>
+      emp.name.toLowerCase().startsWith(query)
+    );
+  }, [employees, searchQuery]);
+
+  // ── Handle selecting an employee from suggestions ─────────
+  const handleSelectEmployee = (empId: string, empName: string) => {
+    setSelectedEmployee(empId);
+    setSearchQuery(empName);
+    setShowSuggestions(false);
+  };
+
+  // ── Handle clearing the search ────────────────────────────
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setSelectedEmployee("");
+    setShowSuggestions(false);
+  };
 
   // ── Fetch employees on mount ──────────────────────────────
   useEffect(() => {
@@ -46,6 +78,7 @@ export default function AttendanceCalendar() {
         setEmployees(emps.map((e) => ({ id: e.id, name: e.name })));
         if (emps.length > 0 && !selectedEmployee) {
           setSelectedEmployee(emps[0].id);
+          setSearchQuery(emps[0].name);
         }
       } catch (error: any) {
         toast.error("Failed to load employees: " + error.message);
@@ -202,24 +235,75 @@ export default function AttendanceCalendar() {
         <p className="text-gray-600 mt-1">View attendance history by employee</p>
       </div>
 
-      {/* Employee selector */}
+      {/* Employee search */}
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="w-full sm:w-64">
-              <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select employee" />
-                </SelectTrigger>
-                <SelectContent>
-                  {employees.map((emp) => (
-                    <SelectItem key={emp.id} value={emp.id}>
-                      {emp.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="w-full sm:w-80 relative" ref={searchRef}>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Search Employee
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  placeholder="Type employee name to search..."
+                  className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg text-sm
+                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                    bg-white text-gray-900 placeholder-gray-400
+                    transition-all duration-200"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={handleClearSearch}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Suggestions dropdown */}
+              {showSuggestions && searchQuery.trim() && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {filteredEmployees.length === 0 ? (
+                    <div className="px-4 py-3 text-sm text-gray-500">
+                      No employees found matching "{searchQuery}"
+                    </div>
+                  ) : (
+                    filteredEmployees.map((emp) => (
+                      <button
+                        key={emp.id}
+                        onClick={() => handleSelectEmployee(emp.id, emp.name)}
+                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 transition-colors flex items-center gap-3 ${
+                          selectedEmployee === emp.id ? "bg-blue-50 text-blue-700 font-medium" : "text-gray-900"
+                        }`}
+                      >
+                        <img
+                          src={`https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=3b82f6&color=fff&size=28`}
+                          alt={emp.name}
+                          className="w-7 h-7 rounded-full"
+                        />
+                        <span>{emp.name}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
+            {selectedEmployee && (
+              <div className="flex items-center gap-2 mt-6 sm:mt-0">
+                <Badge variant="outline" className="text-blue-600 border-blue-300 bg-blue-50 py-1.5 px-3">
+                  Viewing: {employees.find(e => e.id === selectedEmployee)?.name || "—"}
+                </Badge>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

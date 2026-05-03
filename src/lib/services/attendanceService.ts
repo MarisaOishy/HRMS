@@ -42,6 +42,7 @@ export function parseTime12h(time: string): Date | null {
 
 /** 
  * Calculate net working hours between two time strings.
+ * Returns the raw duration in hours (decimal).
  */
 function calculateHours(checkIn: string, checkOut: string): string {
   const inT = parseTime12h(checkIn)
@@ -54,13 +55,35 @@ function calculateHours(checkIn: string, checkOut: string): string {
   return Math.max(0, diff).toFixed(2)
 }
 
-/** Calculate overtime based on net working hours */
-function calculateOvertime(netHours: string): string {
-  const hours = parseFloat(netHours)
-  if (hours > STANDARD_WORK_HOURS) {
-    return (hours - STANDARD_WORK_HOURS).toFixed(2)
+/** 
+ * Calculate overtime: time worked AFTER 5:00 PM.
+ * If checkout is after 5 PM, overtime = checkout - 5:00 PM.
+ * If checkout is at or before 5 PM, overtime = 0.
+ */
+function calculateOvertime(checkIn: string, checkOut: string): string {
+  const outT = parseTime12h(checkOut)
+  if (!outT) return '0.00'
+
+  const shiftEnd = new Date(outT)
+  shiftEnd.setHours(SHIFT_END.hours, SHIFT_END.minutes, 0, 0)
+
+  if (outT.getTime() > shiftEnd.getTime()) {
+    const overtimeMs = outT.getTime() - shiftEnd.getTime()
+    const overtimeHours = overtimeMs / (1000 * 60 * 60)
+    return overtimeHours.toFixed(2)
   }
   return '0.00'
+}
+
+/**
+ * Check if employee checked out before 5:00 PM (early checkout).
+ */
+function isEarlyCheckout(checkOut: string): boolean {
+  const outT = parseTime12h(checkOut)
+  if (!outT) return false
+  const shiftEnd = new Date(outT)
+  shiftEnd.setHours(SHIFT_END.hours, SHIFT_END.minutes, 0, 0)
+  return outT.getTime() < shiftEnd.getTime()
 }
 
 /** 
@@ -139,7 +162,7 @@ export async function getAttendanceWithEmployees(date: string): Promise<Attendan
         employee_name: emp.name,
         employee_role: emp.role,
         employee_avatar: emp.avatar,
-        overtime_hours: calculateOvertime(rec.hours),
+        overtime_hours: calculateOvertime(rec.check_in, rec.check_out),
       }
     }
     
