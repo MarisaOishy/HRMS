@@ -1,47 +1,132 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
-import { Users, Calendar, FileText, Landmark, TrendingUp, TrendingDown, ArrowRight, Clock, CheckCircle, XCircle } from "lucide-react";
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { chartData, recentActivities } from "../../data/mockData";
-
-const stats = [
-  {
-    title: "Total Employees",
-    value: "115",
-    change: "+5.2%",
-    trend: "up",
-    icon: Users,
-    color: "blue",
-  },
-  {
-    title: "Present Today",
-    value: "108",
-    change: "93.9%",
-    trend: "up",
-    icon: CheckCircle,
-    color: "green",
-  },
-  {
-    title: "Pending Leaves",
-    value: "8",
-    change: "-2 from last week",
-    trend: "down",
-    icon: FileText,
-    color: "orange",
-  },
-  {
-    title: "Payroll (Monthly)",
-    value: "Tk 952K",
-    change: "+3.1%",
-    trend: "up",
-    icon: Landmark,
-    color: "purple",
-  },
-];
+import {
+  Users, Calendar, FileText, Landmark,
+  TrendingUp, TrendingDown, ArrowRight, Clock,
+  CheckCircle, XCircle, Loader2, AlertTriangle,
+} from "lucide-react";
+import {
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from "recharts";
+import {
+  getDashboardStats,
+  getAttendanceTrend,
+  getEmployeeGrowth,
+  getDepartmentDistribution,
+  getRecentActivities,
+  type DashboardStats,
+  type AttendanceTrendPoint,
+  type EmployeeGrowthPoint,
+  type DeptDistribution,
+  type RecentActivity,
+} from "../../../lib/services/dashboardService";
+import { toast } from "sonner";
 
 const COLORS = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#6366f1"];
 
 export default function DashboardPage() {
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [attendanceTrend, setAttendanceTrend] = useState<AttendanceTrendPoint[]>([]);
+  const [employeeGrowth, setEmployeeGrowth] = useState<EmployeeGrowthPoint[]>([]);
+  const [deptDistribution, setDeptDistribution] = useState<DeptDistribution[]>([]);
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        const [statsData, trendData, growthData, deptData, activityData] = await Promise.all([
+          getDashboardStats(),
+          getAttendanceTrend(),
+          getEmployeeGrowth(),
+          getDepartmentDistribution(),
+          getRecentActivities(),
+        ]);
+        setStats(statsData);
+        setAttendanceTrend(trendData);
+        setEmployeeGrowth(growthData);
+        setDeptDistribution(deptData);
+        setRecentActivities(activityData);
+      } catch (error: any) {
+        toast.error("Failed to load dashboard data: " + error.message);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  // ── Format payroll as "Tk XXK" ────────────────────────────
+  const formatPayroll = (amount: number): string => {
+    if (amount >= 1000000) return `Tk ${(amount / 1000000).toFixed(1)}M`;
+    if (amount >= 1000) return `Tk ${(amount / 1000).toFixed(0)}K`;
+    return `Tk ${amount}`;
+  };
+
+  // ── Build stat cards from real data ───────────────────────
+  const statCards = stats
+    ? [
+        {
+          title: "Total Employees",
+          value: stats.totalEmployees.toString(),
+          change: `${stats.presentToday} present today`,
+          trend: "up" as const,
+          icon: Users,
+          color: "blue",
+        },
+        {
+          title: "Present Today",
+          value: stats.presentToday.toString(),
+          change: `${stats.presentPercentage}%`,
+          trend: "up" as const,
+          icon: CheckCircle,
+          color: "green",
+        },
+        {
+          title: "Pending Leaves",
+          value: stats.pendingLeaves.toString(),
+          change: `${stats.onLeaveToday} on leave today`,
+          trend: stats.pendingLeaves > 5 ? ("up" as const) : ("down" as const),
+          icon: FileText,
+          color: "orange",
+        },
+        {
+          title: "Payroll (Monthly)",
+          value: formatPayroll(stats.monthlyPayroll),
+          change: `${stats.totalEmployees} employees`,
+          trend: "up" as const,
+          icon: Landmark,
+          color: "purple",
+        },
+      ]
+    : [];
+
+  const colorClasses: Record<string, string> = {
+    blue: "bg-blue-50 text-blue-600",
+    green: "bg-green-50 text-green-600",
+    orange: "bg-orange-50 text-orange-600",
+    purple: "bg-purple-50 text-purple-600",
+  };
+
+  // ── Icon map for activities ───────────────────────────────
+  const iconMap: Record<string, any> = {
+    calendar: Calendar,
+    check: CheckCircle,
+    user: Users,
+    briefcase: Landmark,
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+        <span className="ml-4 text-lg text-gray-500">Loading dashboard...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -52,14 +137,8 @@ export default function DashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => {
+        {statCards.map((stat) => {
           const Icon = stat.icon;
-          const colorClasses = {
-            blue: "bg-blue-50 text-blue-600",
-            green: "bg-green-50 text-green-600",
-            orange: "bg-orange-50 text-orange-600",
-            purple: "bg-purple-50 text-purple-600",
-          };
 
           return (
             <Card key={stat.title}>
@@ -83,7 +162,7 @@ export default function DashboardPage() {
                       </span>
                     </div>
                   </div>
-                  <div className={`p-3 rounded-lg ${colorClasses[stat.color as keyof typeof colorClasses]}`}>
+                  <div className={`p-3 rounded-lg ${colorClasses[stat.color]}`}>
                     <Icon className="w-6 h-6" />
                   </div>
                 </div>
@@ -101,36 +180,43 @@ export default function DashboardPage() {
             <CardTitle>Attendance Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData.attendanceTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="month" stroke="#6b7280" />
-                <YAxis stroke="#6b7280" />
-                <Tooltip />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="present"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  dot={{ fill: "#3b82f6" }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="absent"
-                  stroke="#ef4444"
-                  strokeWidth={2}
-                  dot={{ fill: "#ef4444" }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="late"
-                  stroke="#f59e0b"
-                  strokeWidth={2}
-                  dot={{ fill: "#f59e0b" }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {attendanceTrend.length === 0 ? (
+              <div className="flex items-center justify-center h-[300px] text-gray-400">
+                <AlertTriangle className="w-5 h-5 mr-2" />
+                No attendance data available
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={attendanceTrend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="month" stroke="#6b7280" />
+                  <YAxis stroke="#6b7280" />
+                  <Tooltip />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="present"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dot={{ fill: "#3b82f6" }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="absent"
+                    stroke="#ef4444"
+                    strokeWidth={2}
+                    dot={{ fill: "#ef4444" }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="late"
+                    stroke="#f59e0b"
+                    strokeWidth={2}
+                    dot={{ fill: "#f59e0b" }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
@@ -140,15 +226,22 @@ export default function DashboardPage() {
             <CardTitle>Employee Growth</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData.employeeGrowth}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="month" stroke="#6b7280" />
-                <YAxis stroke="#6b7280" />
-                <Tooltip />
-                <Bar dataKey="count" fill="#8b5cf6" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {employeeGrowth.length === 0 ? (
+              <div className="flex items-center justify-center h-[300px] text-gray-400">
+                <AlertTriangle className="w-5 h-5 mr-2" />
+                No employee data available
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={employeeGrowth}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="month" stroke="#6b7280" />
+                  <YAxis stroke="#6b7280" />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#8b5cf6" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -161,25 +254,32 @@ export default function DashboardPage() {
             <CardTitle>Department Distribution</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={chartData.departmentDistribution}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {chartData.departmentDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {deptDistribution.length === 0 ? (
+              <div className="flex items-center justify-center h-[250px] text-gray-400">
+                <AlertTriangle className="w-5 h-5 mr-2" />
+                No department data
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={deptDistribution}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {deptDistribution.map((_entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
@@ -193,33 +293,34 @@ export default function DashboardPage() {
             </Link>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity) => {
-                const iconMap: Record<string, any> = {
-                  calendar: Calendar,
-                  check: CheckCircle,
-                  user: Users,
-                  briefcase: Landmark,
-                };
-                const Icon = iconMap[activity.icon] || Clock;
+            {recentActivities.length === 0 ? (
+              <div className="flex items-center justify-center py-8 text-gray-400">
+                <Clock className="w-5 h-5 mr-2" />
+                No recent activity
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentActivities.map((activity) => {
+                  const Icon = iconMap[activity.icon] || Clock;
 
-                return (
-                  <div key={activity.id} className="flex items-start gap-4">
-                    <div className="p-2 bg-gray-100 rounded-lg">
-                      <Icon className="w-4 h-4 text-gray-600" />
+                  return (
+                    <div key={activity.id} className="flex items-start gap-4">
+                      <div className="p-2 bg-gray-100 rounded-lg">
+                        <Icon className="w-4 h-4 text-gray-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-900">
+                          <span className="font-medium">{activity.user}</span>{" "}
+                          {activity.action}
+                        </p>
+                        <p className="text-sm text-gray-500 mt-1">{activity.details}</p>
+                        <p className="text-xs text-gray-400 mt-1">{activity.timestamp}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900">
-                        <span className="font-medium">{activity.user}</span>{" "}
-                        {activity.action}
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">{activity.details}</p>
-                      <p className="text-xs text-gray-400 mt-1">{activity.timestamp}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
