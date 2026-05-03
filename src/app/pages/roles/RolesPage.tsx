@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -244,9 +245,11 @@ export default function RolesPage() {
                       ))}
                     </div>
                   </div>
-                  <Button variant="outline" className="w-full">
-                    <Users className="w-4 h-4 mr-2" />
-                    Manage Users
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link to={`/employees?role=${encodeURIComponent(role.name)}`}>
+                      <Users className="w-4 h-4 mr-2" />
+                      View Users
+                    </Link>
                   </Button>
                 </CardContent>
               </Card>
