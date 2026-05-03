@@ -30,6 +30,7 @@ import LeaveHistoryPage from "./pages/leave/LeaveHistoryPage";
 import PayrollDashboard from "./pages/payroll/PayrollDashboard";
 import PayslipPage from "./pages/payroll/PayslipPage";
 import PayrollTablePage from "./pages/payroll/PayrollTablePage";
+import ProcessPayrollPage from "./pages/payroll/ProcessPayrollPage";
 
 // Departments & Roles
 import DepartmentsPage from "./pages/departments/DepartmentsPage";
@@ -84,6 +85,7 @@ export const router = createBrowserRouter([
       
       // Payroll
       { path: "payroll", Component: PayrollDashboard },
+      { path: "payroll/process", Component: ProcessPayrollPage },
       { path: "payroll/payslip/:id", Component: PayslipPage },
       { path: "payroll/table", Component: PayrollTablePage },
       

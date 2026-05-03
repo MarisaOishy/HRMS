@@ -30,3 +30,13 @@ export async function getPayrollByEmployee(employeeId: string) {
   if (error) throw error
   return data as PayrollRecord[]
 }
+
+export async function createPayrollRecord(record: Omit<PayrollRecord, 'id'>) {
+  const { data, error } = await supabase
+    .from('payroll')
+    .insert(record)
+    .select()
+    .single()
+  if (error) throw error
+  return data as PayrollRecord
+}

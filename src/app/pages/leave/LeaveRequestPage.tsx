@@ -17,18 +17,18 @@ import { toast } from "sonner";
 import { useAuth } from "../../contexts/AuthContext";
 import {
   createLeaveRequest,
-  getEmployeeByEmailForLeave,
   getLeaveBalanceByEmployee,
 } from "../../../lib/services/leaveService";
 import type { LeaveBalance } from "../../../lib/types/database";
+import { supabase } from "../../../lib/supabase";
 
 export default function LeaveRequestPage() {
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [employee, setEmployee] = useState<{ id: string; name: string } | null>(null);
+  const [employeesList, setEmployeesList] = useState<{ id: string; name: string }[]>([]);
+  const [employeeId, setEmployeeId] = useState<string>("");
   const [balance, setBalance] = useState<LeaveBalance | null>(null);
 
   const [leaveType, setLeaveType] = useState("");
@@ -56,46 +56,52 @@ export default function LeaveRequestPage() {
     return Math.floor((end.getTime() - start.getTime()) / msPerDay) + 1;
   }, [startDate, endDate]);
 
-  const fetchData = useCallback(async () => {
-    if (!user?.email) {
-      setLoading(false);
-      return;
-    }
-
+  const fetchEmployees = useCallback(async () => {
     try {
       setLoading(true);
-      const foundEmployee = await getEmployeeByEmailForLeave(user.email);
-      if (!foundEmployee) {
-        setEmployee(null);
-        return;
-      }
+      const { data, error } = await supabase
+        .from('employees')
+        .select('id, name')
+        .order('name');
+      
+      if (error) throw error;
+      setEmployeesList(data || []);
+    } catch (error: any) {
+      toast.error("Failed to load employees: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-      setEmployee({ id: foundEmployee.id, name: foundEmployee.name });
+  useEffect(() => {
+    fetchEmployees();
+  }, [fetchEmployees]);
 
+  useEffect(() => {
+    if (!employeeId) {
+      setBalance(null);
+      return;
+    }
+    const fetchBalance = async () => {
       try {
-        const leaveBalance = await getLeaveBalanceByEmployee(foundEmployee.id);
+        const leaveBalance = await getLeaveBalanceByEmployee(employeeId);
         setBalance(leaveBalance);
       } catch {
         setBalance(null);
       }
-    } catch (error: any) {
-      toast.error("Failed to load leave data: " + error.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.email]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    };
+    fetchBalance();
+  }, [employeeId]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!employee) {
-      toast.error("Your account is not linked to an employee profile.");
+    if (!employeeId) {
+      toast.error("Please select an employee.");
       return;
     }
+    const selectedEmployee = employeesList.find(e => e.id === employeeId);
+    if (!selectedEmployee) return;
     if (!leaveTypeLabel) {
       toast.error("Please select a leave type.");
       return;
@@ -120,8 +126,8 @@ export default function LeaveRequestPage() {
     setSubmitting(true);
     try {
       await createLeaveRequest({
-        employee_id: employee.id,
-        employee_name: employee.name,
+        employee_id: selectedEmployee.id,
+        employee_name: selectedEmployee.name,
         type: leaveTypeLabel,
         start_date: startDate,
         end_date: endDate,
@@ -166,9 +172,9 @@ export default function LeaveRequestPage() {
               <Loader2 className="w-5 h-5 animate-spin mr-2" />
               Loading leave balance...
             </div>
-          ) : !employee ? (
+          ) : !employeeId ? (
             <p className="text-sm text-amber-700 bg-amber-50 rounded-md p-3">
-              Your account is not linked to an employee profile. Contact HR.
+              Please select an employee to view their leave balance.
             </p>
           ) : (
             <div className="grid grid-cols-3 gap-4">
@@ -196,6 +202,22 @@ export default function LeaveRequestPage() {
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="space-y-2">
+              <Label htmlFor="employee">Employee *</Label>
+              <Select value={employeeId} onValueChange={setEmployeeId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select employee" />
+                </SelectTrigger>
+                <SelectContent>
+                  {employeesList.map((emp) => (
+                    <SelectItem key={emp.id} value={emp.id}>
+                      {emp.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="leaveType">Leave Type *</Label>
               <Select value={leaveType} onValueChange={setLeaveType}>
@@ -246,7 +268,7 @@ export default function LeaveRequestPage() {
             </div>
 
             <div className="flex gap-4 pt-4">
-              <Button type="submit" size="lg" disabled={submitting || loading || !employee}>
+              <Button type="submit" size="lg" disabled={submitting || loading || !employeeId}>
                 {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Submit Request
               </Button>

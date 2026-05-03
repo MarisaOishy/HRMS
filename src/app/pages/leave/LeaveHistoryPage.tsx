@@ -5,7 +5,7 @@ import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth, isAdminOrHR } from "../../contexts/AuthContext";
 import {
   getEmployeeByEmailForLeave,
   getLeaveBalanceByEmployee,
@@ -14,7 +14,8 @@ import {
 import type { LeaveBalance, LeaveRequest } from "../../../lib/types/database";
 
 export default function LeaveHistoryPage() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const canManage = isAdminOrHR(role);
 
   const [loading, setLoading] = useState(true);
   const [employeeId, setEmployeeId] = useState<string | null>(null);
@@ -64,12 +65,14 @@ export default function LeaveHistoryPage() {
           <h1 className="text-3xl font-semibold text-gray-900">Leave History</h1>
           <p className="text-gray-600 mt-1">View your leave requests and balance</p>
         </div>
-        <Button asChild>
-          <Link to="/leave/request">
-            <Plus className="w-4 h-4 mr-2" />
-            Request Leave
-          </Link>
-        </Button>
+        {canManage && (
+          <Button asChild>
+            <Link to="/leave/request">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Leave Record
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Leave Balance */}
@@ -154,9 +157,11 @@ export default function LeaveHistoryPage() {
             ) : (
               <div className="text-center py-12">
                 <p className="text-gray-500">No leave requests found</p>
-                <Button className="mt-4" asChild>
-                  <Link to="/leave/request">Request Your First Leave</Link>
-                </Button>
+                {canManage && (
+                  <Button className="mt-4" asChild>
+                    <Link to="/leave/request">Add Leave Record</Link>
+                  </Button>
+                )}
               </div>
             )}
           </div>

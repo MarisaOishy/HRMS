@@ -179,6 +179,11 @@ export default function PayrollDashboard() {
               ))}
             </SelectContent>
           </Select>
+          <Button className="bg-blue-600 hover:bg-blue-700" asChild>
+            <Link to="/payroll/process">
+              Process Salary
+            </Link>
+          </Button>
           <Button variant="outline" asChild>
             <Link to="/payroll/table">
               <Calendar className="w-4 h-4 mr-2" />

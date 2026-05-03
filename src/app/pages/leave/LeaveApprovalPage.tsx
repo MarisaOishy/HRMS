@@ -90,9 +90,14 @@ export default function LeaveApprovalPage() {
           <h1 className="text-3xl font-semibold text-gray-900">Leave Approvals</h1>
           <p className="text-gray-600 mt-1">Review and approve leave requests</p>
         </div>
-        <Link to="/leave/history">
-          <Button variant="outline">View History</Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link to="/leave/request">
+            <Button className="bg-blue-600 hover:bg-blue-700">Add Leave Record</Button>
+          </Link>
+          <Link to="/leave/history">
+            <Button variant="outline">View History</Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}
