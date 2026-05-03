@@ -30,29 +30,29 @@ export default function CompanySettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="companyName">Company Name</Label>
-              <Input id="companyName" defaultValue="HRMS Pro" />
+              <Input id="companyName" defaultValue="BanglaHR" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="companyEmail">Company Email</Label>
-                <Input id="companyEmail" type="email" defaultValue="info@company.com" />
+                <Input id="companyEmail" type="email" defaultValue="info@banglahr.com.bd" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="companyPhone">Company Phone</Label>
-                <Input id="companyPhone" type="tel" defaultValue="+1 (555) 000-0000" />
+                <Input id="companyPhone" type="tel" defaultValue="+880 2 5500 0000" />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="address">Address</Label>
-              <Input id="address" defaultValue="123 Business Ave, San Francisco, CA 94102" />
+              <Input id="address" defaultValue="Motijheel C/A, Dhaka 1000, Bangladesh" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="website">Website</Label>
-                <Input id="website" type="url" defaultValue="https://company.com" />
+                <Input id="website" type="url" defaultValue="https://banglahr.com.bd" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="industry">Industry</Label>
@@ -107,15 +107,12 @@ export default function CompanySettingsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="timezone">Timezone</Label>
-                <Select defaultValue="pst">
+                <Select defaultValue="bdt">
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pst">Pacific Time (PT)</SelectItem>
-                    <SelectItem value="est">Eastern Time (ET)</SelectItem>
-                    <SelectItem value="cst">Central Time (CT)</SelectItem>
-                    <SelectItem value="mst">Mountain Time (MT)</SelectItem>
+                    <SelectItem value="bdt">Bangladesh Standard Time (BST, UTC+6)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

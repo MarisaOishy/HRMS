@@ -160,11 +160,11 @@ export default function EmployeeAddPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email *</Label>
-                <Input id="email" type="email" placeholder="john.doe@company.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Input id="email" type="email" placeholder="name@banglahr.com.bd" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number *</Label>
-                <Input id="phone" type="tel" placeholder="+1 (555) 123-4567" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                <Input id="phone" type="tel" placeholder="+880 17XX-XXXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} required />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -186,7 +186,7 @@ export default function EmployeeAddPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="address">Address</Label>
-              <Textarea id="address" placeholder="123 Main St, City, State, ZIP" value={address} onChange={(e) => setAddress(e.target.value)} />
+              <Textarea id="address" placeholder="House, Road, Area, City, Bangladesh" value={address} onChange={(e) => setAddress(e.target.value)} />
             </div>
           </CardContent>
         </Card>
@@ -236,7 +236,7 @@ export default function EmployeeAddPage() {
           <CardContent>
             <div className="space-y-2">
               <Label htmlFor="emergencyPhone">Contact Phone</Label>
-              <Input id="emergencyPhone" type="tel" placeholder="+1 (555) 987-6543" value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} />
+              <Input id="emergencyPhone" type="tel" placeholder="+880 18XX-XXXXXX" value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} />
             </div>
           </CardContent>
         </Card>

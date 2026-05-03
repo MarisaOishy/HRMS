@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { Card, CardContent } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
@@ -36,10 +36,12 @@ import type { Employee } from "../../../lib/types/database";
 import { toast } from "sonner";
 
 export default function EmployeeListPage() {
+  const [searchParams] = useSearchParams();
+  const departmentFromQuery = searchParams.get("department");
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [departmentFilter, setDepartmentFilter] = useState(departmentFromQuery || "all");
   const [deleting, setDeleting] = useState<string | null>(null);
 
   // Fetch employees from Supabase
@@ -59,6 +61,10 @@ export default function EmployeeListPage() {
     fetchEmployees();
   }, []);
 
+  useEffect(() => {
+    setDepartmentFilter(departmentFromQuery || "all");
+  }, [departmentFromQuery]);
+
   // Delete employee
   const handleDelete = async (id: string, name: string) => {
     setDeleting(id);
@@ -72,6 +78,10 @@ export default function EmployeeListPage() {
       setDeleting(null);
     }
   };
+
+  // Dynamic department options from current employee data
+  const departmentOptions = Array.from(new Set(employees.map((emp) => emp.department).filter(Boolean)))
+    .sort((a, b) => a.localeCompare(b));
 
   // Client-side filtering
   const filteredEmployees = employees.filter((emp) => {
@@ -187,12 +197,11 @@ export default function EmployeeListPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
-                <SelectItem value="Engineering">Engineering</SelectItem>
-                <SelectItem value="Product">Product</SelectItem>
-                <SelectItem value="Design">Design</SelectItem>
-                <SelectItem value="Marketing">Marketing</SelectItem>
-                <SelectItem value="Sales">Sales</SelectItem>
-                <SelectItem value="Human Resources">HR</SelectItem>
+                {departmentOptions.map((department) => (
+                  <SelectItem key={department} value={department}>
+                    {department}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Button variant="outline" onClick={handleExport}>

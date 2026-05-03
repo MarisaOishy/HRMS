@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/ca
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
-import { ArrowLeft, Mail, Phone, Calendar, MapPin, DollarSign, Building2, Edit, Download, Loader2 } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Calendar, MapPin, Landmark, Building2, Edit, Download, Loader2 } from "lucide-react";
 import { getEmployeeById } from "../../../lib/services/employeeService";
 import { getAttendanceByEmployee } from "../../../lib/services/attendanceService";
 import { getLeaveRequestsByEmployee } from "../../../lib/services/leaveService";
 import type { Employee, AttendanceRecord, LeaveRequest } from "../../../lib/types/database";
 import { toast } from "sonner";
+import { formatBDT } from "../../../lib/formatters";
 
 export default function EmployeeProfilePage() {
   const { id } = useParams();
@@ -92,8 +93,8 @@ export default function EmployeeProfilePage() {
                   <div><p className="text-sm text-gray-500">Join Date</p><p className="font-medium">{employee.join_date}</p></div>
                 </div>
                 <div className="flex items-center gap-3 text-gray-700">
-                  <DollarSign className="w-5 h-5 text-gray-400" />
-                  <div><p className="text-sm text-gray-500">Salary</p><p className="font-medium">${employee.salary.toLocaleString()}</p></div>
+                  <Landmark className="w-5 h-5 text-gray-400" />
+                  <div><p className="text-sm text-gray-500">Salary</p><p className="font-medium">{formatBDT(employee.salary)}</p></div>
                 </div>
                 <div className="flex items-center gap-3 text-gray-700">
                   <MapPin className="w-5 h-5 text-gray-400" />

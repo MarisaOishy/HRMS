@@ -101,7 +101,7 @@ export default function ReportsPage() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-gray-600">Total Payroll</p>
-                <p className="text-3xl font-semibold text-gray-900 mt-2">$5.7M</p>
+                <p className="text-3xl font-semibold text-gray-900 mt-2">Tk 5.7M</p>
               </div>
               <div className="p-3 rounded-lg bg-blue-50 text-blue-600">
                 <TrendingUp className="w-6 h-6" />

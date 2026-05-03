@@ -4,7 +4,7 @@ import {
   Users,
   Calendar,
   FileText,
-  DollarSign,
+  Landmark,
   Building2,
   TrendingUp,
   Settings,
@@ -24,7 +24,7 @@ const navigation = [
   { name: "Employees", href: "/employees", icon: Users },
   { name: "Attendance", href: "/attendance", icon: Calendar },
   { name: "Leave", href: "/leave/approval", icon: FileText },
-  { name: "Payroll", href: "/payroll", icon: DollarSign },
+  { name: "Payroll", href: "/payroll", icon: Landmark },
   { name: "Departments", href: "/departments", icon: Building2 },
   { name: "Roles", href: "/roles", icon: Shield },
   { name: "Performance", href: "/performance/reviews", icon: TrendingUp },
@@ -57,9 +57,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           {!collapsed && (
             <Link to="/" className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">HR</span>
+                <span className="text-white font-bold text-sm">BD</span>
               </div>
-              <span className="font-semibold text-gray-900">HRMS Pro</span>
+              <span className="font-semibold text-gray-900">BanglaHR</span>
             </Link>
           )}
           <button
@@ -117,9 +117,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  Admin User
+                  HR Admin
                 </p>
-                <p className="text-xs text-gray-500 truncate">admin@company.com</p>
+                <p className="text-xs text-gray-500 truncate">hr.admin@banglahr.com.bd</p>
               </div>
             </div>
           </div>

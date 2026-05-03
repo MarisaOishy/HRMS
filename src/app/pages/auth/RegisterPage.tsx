@@ -56,7 +56,7 @@ export default function RegisterPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="name@company.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Input id="email" type="email" placeholder="name@banglahr.com.bd" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>

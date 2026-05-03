@@ -46,21 +46,21 @@ export function parseTime12h(time: string): Date | null {
 function calculateHours(checkIn: string, checkOut: string): string {
   const inT = parseTime12h(checkIn)
   const outT = parseTime12h(checkOut)
-  if (!inT || !outT) return '0.0'
+  if (!inT || !outT) return '0.00'
   
   let diff = (outT.getTime() - inT.getTime()) / (1000 * 60 * 60)
   if (diff < 0) diff += 24 // Handle overnight shifts if any
   
-  return Math.max(0, diff).toFixed(1)
+  return Math.max(0, diff).toFixed(2)
 }
 
 /** Calculate overtime based on net working hours */
 function calculateOvertime(netHours: string): string {
   const hours = parseFloat(netHours)
   if (hours > STANDARD_WORK_HOURS) {
-    return (hours - STANDARD_WORK_HOURS).toFixed(1)
+    return (hours - STANDARD_WORK_HOURS).toFixed(2)
   }
-  return '0.0'
+  return '0.00'
 }
 
 /** 
@@ -153,11 +153,11 @@ export async function getAttendanceWithEmployees(date: string): Promise<Attendan
       check_in: '-',
       check_out: '-',
       status: isLeave ? 'Leave' : 'Absent',
-      hours: '0.0',
+      hours: '0.00',
       employee_name: emp.name,
       employee_role: emp.role,
       employee_avatar: emp.avatar,
-      overtime_hours: '0.0',
+      overtime_hours: '0.00',
     }
   })
 
@@ -209,7 +209,7 @@ export async function createAttendance(input: CreateAttendanceInput): Promise<At
 
   const ci = check_in || '-'
   const co = check_out || '-'
-  const hours = (ci !== '-' && co !== '-') ? calculateHours(ci, co) : '0.0'
+  const hours = (ci !== '-' && co !== '-') ? calculateHours(ci, co) : '0.00'
   const finalStatus = determineStatus(status, ci); // Auto-generates Late/Present safely
 
   const { data, error } = await supabase
@@ -245,7 +245,7 @@ export async function updateAttendance(recordId: string, input: UpdateAttendance
 
   const ci = input.check_in ?? current.check_in
   const co = input.check_out ?? current.check_out
-  const hours = (ci !== '-' && co !== '-') ? calculateHours(ci, co) : '0.0'
+  const hours = (ci !== '-' && co !== '-') ? calculateHours(ci, co) : '0.00'
   
   const statusToUse = input.status !== undefined ? input.status : current.status;
   const finalStatus = determineStatus(statusToUse, ci);
@@ -348,7 +348,7 @@ export async function selfCheckIn(employeeId: string): Promise<{ record: Attenda
       check_in: checkInTime,
       check_out: '-',
       status,
-      hours: '0.0',
+      hours: '0.00',
     })
     .select()
     .single()

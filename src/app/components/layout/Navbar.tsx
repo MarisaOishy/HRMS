@@ -41,7 +41,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
     }
   };
 
-  const userEmail = user?.email || "admin@company.com";
+  const userEmail = user?.email || "hr.admin@banglahr.com.bd";
   const userName = user?.user_metadata?.name || userEmail.split("@")[0];
   const userInitials = userName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
 

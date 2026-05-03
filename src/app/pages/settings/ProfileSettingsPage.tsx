@@ -56,11 +56,11 @@ export default function ProfileSettingsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" defaultValue="admin@company.com" />
+                <Input id="email" type="email" defaultValue="hr.admin@banglahr.com.bd" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" type="tel" defaultValue="+1 (555) 123-4567" />
+                <Input id="phone" type="tel" defaultValue="+880 1712-345678" />
               </div>
             </div>
 

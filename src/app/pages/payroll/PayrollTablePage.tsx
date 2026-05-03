@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { getPayrollData } from "../../../lib/services/payrollService";
 import { getEmployees } from "../../../lib/services/employeeService";
 import type { Employee, PayrollRecord } from "../../../lib/types/database";
+import { formatBDT } from "../../../lib/formatters";
 
 export default function PayrollTablePage() {
   const [loading, setLoading] = useState(true);
@@ -242,10 +243,10 @@ export default function PayrollTablePage() {
                         </div>
                       </TableCell>
                       <TableCell>{employee?.department ?? "Unknown"}</TableCell>
-                      <TableCell>${row.basic_salary.toLocaleString()}</TableCell>
-                      <TableCell>${row.allowances.toLocaleString()}</TableCell>
-                      <TableCell>${row.deductions.toLocaleString()}</TableCell>
-                      <TableCell className="font-semibold">${row.net_salary.toLocaleString()}</TableCell>
+                      <TableCell>{formatBDT(row.basic_salary)}</TableCell>
+                      <TableCell>{formatBDT(row.allowances)}</TableCell>
+                      <TableCell>{formatBDT(row.deductions)}</TableCell>
+                      <TableCell className="font-semibold">{formatBDT(row.net_salary)}</TableCell>
                       <TableCell>
                         <Badge variant={row.status === "Paid" ? "default" : "secondary"}>{row.status}</Badge>
                       </TableCell>

@@ -3,7 +3,7 @@
 export const employees = [
   {
     id: "EMP001",
-    name: "Sarah Johnson",
+    name: "Sadia Rahman",
     email: "sarah.johnson@company.com",
     role: "Senior Software Engineer",
     department: "Engineering",
@@ -19,7 +19,7 @@ export const employees = [
   },
   {
     id: "EMP002",
-    name: "Michael Chen",
+    name: "Mehdi Hasan",
     email: "michael.chen@company.com",
     role: "Product Manager",
     department: "Product",
@@ -35,7 +35,7 @@ export const employees = [
   },
   {
     id: "EMP003",
-    name: "Emily Rodriguez",
+    name: "Nusrat Jahan",
     email: "emily.rodriguez@company.com",
     role: "UX Designer",
     department: "Design",
@@ -51,7 +51,7 @@ export const employees = [
   },
   {
     id: "EMP004",
-    name: "James Wilson",
+    name: "Rakib Hossain",
     email: "james.wilson@company.com",
     role: "Marketing Manager",
     department: "Marketing",
@@ -67,7 +67,7 @@ export const employees = [
   },
   {
     id: "EMP005",
-    name: "Priya Patel",
+    name: "Farhana Akter",
     email: "priya.patel@company.com",
     role: "HR Manager",
     department: "Human Resources",
@@ -83,7 +83,7 @@ export const employees = [
   },
   {
     id: "EMP006",
-    name: "David Kim",
+    name: "Tanvir Ahmed",
     email: "david.kim@company.com",
     role: "Software Engineer",
     department: "Engineering",
@@ -99,7 +99,7 @@ export const employees = [
   },
   {
     id: "EMP007",
-    name: "Lisa Anderson",
+    name: "Ayesha Siddiqua",
     email: "lisa.anderson@company.com",
     role: "Sales Director",
     department: "Sales",
@@ -115,7 +115,7 @@ export const employees = [
   },
   {
     id: "EMP008",
-    name: "Robert Martinez",
+    name: "Shafiqul Islam",
     email: "robert.martinez@company.com",
     role: "DevOps Engineer",
     department: "Engineering",
@@ -132,12 +132,12 @@ export const employees = [
 ];
 
 export const departments = [
-  { id: "dept-1", name: "Engineering", head: "Sarah Johnson", employees: 45, budget: 4500000 },
-  { id: "dept-2", name: "Product", head: "Michael Chen", employees: 12, budget: 1200000 },
-  { id: "dept-3", name: "Design", head: "Emily Rodriguez", employees: 8, budget: 680000 },
-  { id: "dept-4", name: "Marketing", head: "James Wilson", employees: 15, budget: 1350000 },
-  { id: "dept-5", name: "Human Resources", head: "Priya Patel", employees: 6, budget: 528000 },
-  { id: "dept-6", name: "Sales", head: "Lisa Anderson", employees: 25, budget: 2875000 },
+  { id: "dept-1", name: "Engineering", head: "Sadia Rahman", employees: 45, budget: 4500000 },
+  { id: "dept-2", name: "Product", head: "Mehdi Hasan", employees: 12, budget: 1200000 },
+  { id: "dept-3", name: "Design", head: "Nusrat Jahan", employees: 8, budget: 680000 },
+  { id: "dept-4", name: "Marketing", head: "Rakib Hossain", employees: 15, budget: 1350000 },
+  { id: "dept-5", name: "Human Resources", head: "Farhana Akter", employees: 6, budget: 528000 },
+  { id: "dept-6", name: "Sales", head: "Ayesha Siddiqua", employees: 25, budget: 2875000 },
 ];
 
 export const roles = [
@@ -162,7 +162,7 @@ export const leaveRequests = [
   {
     id: "leave-1",
     employeeId: "EMP001",
-    employeeName: "Sarah Johnson",
+    employeeName: "Sadia Rahman",
     type: "Annual Leave",
     startDate: "2026-04-15",
     endDate: "2026-04-19",
@@ -174,7 +174,7 @@ export const leaveRequests = [
   {
     id: "leave-2",
     employeeId: "EMP003",
-    employeeName: "Emily Rodriguez",
+    employeeName: "Nusrat Jahan",
     type: "Sick Leave",
     startDate: "2026-04-08",
     endDate: "2026-04-09",
@@ -186,7 +186,7 @@ export const leaveRequests = [
   {
     id: "leave-3",
     employeeId: "EMP008",
-    employeeName: "Robert Martinez",
+    employeeName: "Shafiqul Islam",
     type: "Parental Leave",
     startDate: "2026-04-01",
     endDate: "2026-04-30",
@@ -198,7 +198,7 @@ export const leaveRequests = [
   {
     id: "leave-4",
     employeeId: "EMP002",
-    employeeName: "Michael Chen",
+    employeeName: "Mehdi Hasan",
     type: "Annual Leave",
     startDate: "2026-05-10",
     endDate: "2026-05-12",
@@ -224,7 +224,7 @@ export const payrollData = [
   {
     id: "pay-1",
     employeeId: "EMP001",
-    employeeName: "Sarah Johnson",
+    employeeName: "Sadia Rahman",
     month: "March 2026",
     basicSalary: 95000,
     allowances: 5000,
@@ -236,7 +236,7 @@ export const payrollData = [
   {
     id: "pay-2",
     employeeId: "EMP002",
-    employeeName: "Michael Chen",
+    employeeName: "Mehdi Hasan",
     month: "March 2026",
     basicSalary: 105000,
     allowances: 6000,
@@ -248,7 +248,7 @@ export const payrollData = [
   {
     id: "pay-3",
     employeeId: "EMP003",
-    employeeName: "Emily Rodriguez",
+    employeeName: "Nusrat Jahan",
     month: "March 2026",
     basicSalary: 85000,
     allowances: 4000,
@@ -263,7 +263,7 @@ export const performanceReviews = [
   {
     id: "perf-1",
     employeeId: "EMP001",
-    employeeName: "Sarah Johnson",
+    employeeName: "Sadia Rahman",
     period: "Q1 2026",
     rating: 4.5,
     technicalSkills: 5,
@@ -278,7 +278,7 @@ export const performanceReviews = [
   {
     id: "perf-2",
     employeeId: "EMP002",
-    employeeName: "Michael Chen",
+    employeeName: "Mehdi Hasan",
     period: "Q1 2026",
     rating: 4.2,
     technicalSkills: 4,
@@ -329,7 +329,7 @@ export const chartData = {
 export const recentActivities = [
   {
     id: "act-1",
-    user: "Sarah Johnson",
+    user: "Sadia Rahman",
     action: "submitted leave request",
     details: "Annual Leave (April 15-19, 2026)",
     timestamp: "2 hours ago",
@@ -337,7 +337,7 @@ export const recentActivities = [
   },
   {
     id: "act-2",
-    user: "Michael Chen",
+    user: "Mehdi Hasan",
     action: "approved timesheet",
     details: "Week ending April 5, 2026",
     timestamp: "4 hours ago",
@@ -345,7 +345,7 @@ export const recentActivities = [
   },
   {
     id: "act-3",
-    user: "Emily Rodriguez",
+    user: "Nusrat Jahan",
     action: "updated profile",
     details: "Changed contact information",
     timestamp: "5 hours ago",

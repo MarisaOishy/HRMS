@@ -120,13 +120,14 @@ export default function AttendanceCalendar() {
     });
 
     // Absent = working days with no record at all (and not in the future)
-    const recordedDays = present + late + absent + leave;
+    const recordedDays = present + absent + leave;
     const impliedAbsent = Math.max(0, workingDays - recordedDays);
     absent += impliedAbsent;
 
-    const attendanceRate = workingDays > 0
-      ? (((present + late) / workingDays) * 100).toFixed(0)
-      : "0";
+    const baseDays = workingDays - leave;
+    const attendanceRate = baseDays > 0
+      ? ((present / baseDays) * 100).toFixed(0)
+      : "100";
 
     return { present, late, absent, leave, attendanceRate };
   }, [statusMap, year, month, daysInMonth]);

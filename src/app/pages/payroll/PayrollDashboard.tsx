@@ -3,12 +3,13 @@ import { Link } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
-import { DollarSign, TrendingUp, Users, Calendar, Download, Eye, Loader2 } from "lucide-react";
+import { Landmark, TrendingUp, Users, Calendar, Download, Eye, Loader2 } from "lucide-react";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 import { getPayrollData } from "../../../lib/services/payrollService";
 import { getEmployees } from "../../../lib/services/employeeService";
 import type { Employee, PayrollRecord } from "../../../lib/types/database";
+import { formatBDT } from "../../../lib/formatters";
 
 export default function PayrollDashboard() {
   const [loading, setLoading] = useState(true);
@@ -208,12 +209,12 @@ export default function PayrollDashboard() {
               <div>
                 <p className="text-sm text-gray-600">Total Payroll</p>
                 <p className="text-3xl font-semibold text-gray-900 mt-2">
-                  ${totalPayroll.toLocaleString()}
+                  {formatBDT(totalPayroll)}
                 </p>
                 <p className="text-sm text-gray-500 mt-1">{selectedMonth === "all" ? "Across all months" : selectedMonth}</p>
               </div>
               <div className="p-3 rounded-lg bg-blue-50 text-blue-600">
-                <DollarSign className="w-6 h-6" />
+                <Landmark className="w-6 h-6" />
               </div>
             </div>
           </CardContent>
@@ -224,7 +225,7 @@ export default function PayrollDashboard() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-gray-600">Avg Salary</p>
-                <p className="text-3xl font-semibold text-gray-900 mt-2">${avgSalary.toLocaleString()}</p>
+                <p className="text-3xl font-semibold text-gray-900 mt-2">{formatBDT(avgSalary)}</p>
                 <p className="text-sm text-gray-500 mt-1">Per employee</p>
               </div>
               <div className="p-3 rounded-lg bg-green-50 text-green-600">
@@ -328,7 +329,7 @@ export default function PayrollDashboard() {
                   <p className="text-sm text-gray-600">{payroll.month}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-gray-900">${payroll.net_salary.toLocaleString()}</p>
+                  <p className="font-semibold text-gray-900">{formatBDT(payroll.net_salary)}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
                       {payroll.status}

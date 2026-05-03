@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { getPayslip } from "../../../lib/services/payrollService";
 import { getEmployeeById } from "../../../lib/services/employeeService";
 import type { Employee, PayrollRecord } from "../../../lib/types/database";
+import { formatBDT } from "../../../lib/formatters";
 
 export default function PayslipPage() {
   const { id } = useParams();
@@ -56,7 +57,7 @@ export default function PayslipPage() {
     if (!payroll) return;
     const employeeName = employee?.name ?? payroll.employee_name;
     const content = [
-      "HRMS Pro - Payslip",
+      "BanglaHR - Payslip",
       "-------------------",
       `Employee: ${employeeName}`,
       `Employee ID: ${payroll.employee_id}`,
@@ -66,10 +67,10 @@ export default function PayslipPage() {
       `Pay Date: ${payroll.pay_date}`,
       `Status: ${payroll.status}`,
       "",
-      `Basic Salary: $${payroll.basic_salary.toLocaleString()}`,
-      `Allowances: $${payroll.allowances.toLocaleString()}`,
-      `Deductions: $${payroll.deductions.toLocaleString()}`,
-      `Net Salary: $${payroll.net_salary.toLocaleString()}`,
+      `Basic Salary: ${formatBDT(payroll.basic_salary)}`,
+      `Allowances: ${formatBDT(payroll.allowances)}`,
+      `Deductions: ${formatBDT(payroll.deductions)}`,
+      `Net Salary: ${formatBDT(payroll.net_salary)}`,
     ].join("\n");
 
     const blob = new Blob([content], { type: "text/plain;charset=utf-8;" });
@@ -137,8 +138,8 @@ export default function PayslipPage() {
                 <span className="text-white font-bold text-2xl">HR</span>
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">HRMS Pro</h1>
-            <p className="text-gray-600 mt-1">123 Business Ave, San Francisco, CA 94102</p>
+            <h1 className="text-2xl font-bold text-gray-900">BanglaHR</h1>
+            <p className="text-gray-600 mt-1">Motijheel C/A, Dhaka 1000, Bangladesh</p>
             <p className="text-lg font-semibold text-blue-600 mt-4">PAYSLIP</p>
           </div>
 
@@ -195,15 +196,15 @@ export default function PayslipPage() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-700">Basic Salary</span>
-                  <span className="font-medium">${payroll.basic_salary.toLocaleString()}</span>
+                  <span className="font-medium">{formatBDT(payroll.basic_salary)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-700">Allowances</span>
-                  <span className="font-medium">${payroll.allowances.toLocaleString()}</span>
+                  <span className="font-medium">{formatBDT(payroll.allowances)}</span>
                 </div>
                 <div className="border-t pt-3 flex justify-between font-semibold">
                   <span>Total Earnings</span>
-                  <span>${(payroll.basic_salary + payroll.allowances).toLocaleString()}</span>
+                  <span>{formatBDT(payroll.basic_salary + payroll.allowances)}</span>
                 </div>
               </div>
             </div>
@@ -213,19 +214,19 @@ export default function PayslipPage() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-700">Income Tax</span>
-                  <span className="font-medium">${deductionBreakdown.tax.toLocaleString()}</span>
+                  <span className="font-medium">{formatBDT(deductionBreakdown.tax)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-700">Social Security</span>
-                  <span className="font-medium">${deductionBreakdown.social.toLocaleString()}</span>
+                  <span className="font-medium">{formatBDT(deductionBreakdown.social)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-700">Health Insurance</span>
-                  <span className="font-medium">${deductionBreakdown.health.toLocaleString()}</span>
+                  <span className="font-medium">{formatBDT(deductionBreakdown.health)}</span>
                 </div>
                 <div className="border-t pt-3 flex justify-between font-semibold">
                   <span>Total Deductions</span>
-                  <span>${payroll.deductions.toLocaleString()}</span>
+                  <span>{formatBDT(payroll.deductions)}</span>
                 </div>
               </div>
             </div>
@@ -234,14 +235,14 @@ export default function PayslipPage() {
           {/* Net Pay */}
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 text-center">
             <p className="text-gray-700 mb-2">Net Pay</p>
-            <p className="text-4xl font-bold text-gray-900">${payroll.net_salary.toLocaleString()}</p>
+            <p className="text-4xl font-bold text-gray-900">{formatBDT(payroll.net_salary)}</p>
             <p className="text-sm text-gray-600 mt-2">Amount payable for {payroll.month}</p>
           </div>
 
           {/* Footer */}
           <div className="mt-8 pt-6 border-t text-center text-sm text-gray-500">
             <p>This is a computer-generated payslip and does not require a signature.</p>
-            <p className="mt-1">For queries, contact hr@company.com</p>
+            <p className="mt-1">For queries, contact hr@banglahr.com.bd</p>
           </div>
         </CardContent>
       </Card>

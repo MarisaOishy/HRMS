@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
-import { Users, Calendar, FileText, DollarSign, TrendingUp, TrendingDown, ArrowRight, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Users, Calendar, FileText, Landmark, TrendingUp, TrendingDown, ArrowRight, Clock, CheckCircle, XCircle } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { chartData, recentActivities } from "../../data/mockData";
 
@@ -31,10 +31,10 @@ const stats = [
   },
   {
     title: "Payroll (Monthly)",
-    value: "$952K",
+    value: "Tk 952K",
     change: "+3.1%",
     trend: "up",
-    icon: DollarSign,
+    icon: Landmark,
     color: "purple",
   },
 ];
@@ -199,7 +199,7 @@ export default function DashboardPage() {
                   calendar: Calendar,
                   check: CheckCircle,
                   user: Users,
-                  briefcase: DollarSign,
+                  briefcase: Landmark,
                 };
                 const Icon = iconMap[activity.icon] || Clock;
 
@@ -256,7 +256,7 @@ export default function DashboardPage() {
               to="/reports"
               className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-500 hover:bg-blue-50 transition-colors"
             >
-              <DollarSign className="w-6 h-6 text-gray-600" />
+              <Landmark className="w-6 h-6 text-gray-600" />
               <span className="text-sm font-medium text-gray-700">View Reports</span>
             </Link>
           </div>

@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("admin@company.com");
+  const [email, setEmail] = useState("hr.admin@banglahr.com.bd");
   const [password, setPassword] = useState("password123");
   const [loading, setLoading] = useState(false);
 
@@ -48,7 +48,7 @@ export default function LoginPage() {
             <Input
               id="email"
               type="email"
-              placeholder="name@company.com"
+              placeholder="name@banglahr.com.bd"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
