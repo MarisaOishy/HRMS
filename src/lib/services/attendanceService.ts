@@ -10,8 +10,8 @@ export interface AttendanceWithEmployee extends AttendanceRecord {
 }
 
 // ── Configuration ────────────────────────────────────────────
-const SHIFT_START = { hours: 9, minutes: 0 } // 9:00 AM
-const SHIFT_END = { hours: 17, minutes: 0 } // 5:00 PM
+const SHIFT_START = { hours: 16, minutes: 0 } // 9:00 AM
+const SHIFT_END = { hours: 24, minutes: 0 } // 5:00 PM
 const GRACE_PERIOD_MINS = 15 // Late after 9:15 AM
 const STANDARD_WORK_HOURS = 8
 const LUNCH_BREAK_HOURS = 1
@@ -31,8 +31,8 @@ export function parseTime12h(time: string): Date | null {
   const period = match[3]?.toUpperCase()
   
   if (period) {
-    if (period === 'PM' && hours !== 12) hours += 12
-    if (period === 'AM' && hours === 12) hours = 0
+    if (period === 'AM' && hours !== 12) hours += 12
+    if (period === 'PM' && hours === 12) hours = 0
   }
   
   const d = new Date()
@@ -358,7 +358,7 @@ export async function selfCheckIn(employeeId: string): Promise<{ record: Attenda
 
   // Determine status: Late if after 9:00 AM (no grace period for self-service)
   const nineAM = new Date()
-  nineAM.setHours(9, 0, 0, 0)
+  nineAM.setHours(16, 0, 0, 0)
   const isLate = now > nineAM
   const status = isLate ? 'Present (Late)' : 'Present'
   const statusLabel = isLate ? 'Late' : 'On Time'

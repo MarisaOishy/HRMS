@@ -28,7 +28,7 @@ interface NavbarProps {
 export default function Navbar({ onMenuClick }: NavbarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const navigate = useNavigate();
 
   // Remove the dark mode class completely if it was set
@@ -55,8 +55,8 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
     }
   };
 
-  const userEmail = user?.email || "hr.admin@banglahr.com.bd";
-  const userName = user?.user_metadata?.name || userEmail.split("@")[0];
+  const userEmail = user?.email || "";
+  const userName = user?.user_metadata?.name || role || userEmail.split("@")[0] || "User";
   const userInitials = userName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
 
   return (
@@ -122,12 +122,14 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
                 Profile
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/settings/company" className="cursor-pointer">
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
-              </Link>
-            </DropdownMenuItem>
+            {role !== "HR" && (
+              <DropdownMenuItem asChild>
+                <Link to="/settings/company" className="cursor-pointer">
+                  <Settings className="w-4 h-4 mr-2" />
+                  Settings
+                </Link>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
                 <LogOut className="w-4 h-4 mr-2" />

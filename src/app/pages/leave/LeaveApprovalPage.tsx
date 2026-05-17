@@ -15,8 +15,11 @@ import { Check, X, Eye, Loader2 } from "lucide-react";
 import { getLeaveRequests, updateLeaveStatus, deductLeaveBalance } from "../../../lib/services/leaveService";
 import type { LeaveRequest } from "../../../lib/types/database";
 import { toast } from "sonner";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function LeaveApprovalPage() {
+  const { role } = useAuth();
+  const canDecide = role !== "HR";
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -168,24 +171,28 @@ export default function LeaveApprovalPage() {
                           <Button variant="ghost" size="sm">
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-green-600 hover:text-green-700"
-                            onClick={() => handleApprove(request)}
-                            disabled={actionLoading === request.id}
-                          >
-                            {actionLoading === request.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700"
-                            onClick={() => handleReject(request.id)}
-                            disabled={actionLoading === request.id}
-                          >
-                            {actionLoading === request.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
-                          </Button>
+                          {canDecide && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-green-600 hover:text-green-700"
+                                onClick={() => handleApprove(request)}
+                                disabled={actionLoading === request.id}
+                              >
+                                {actionLoading === request.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700"
+                                onClick={() => handleReject(request.id)}
+                                disabled={actionLoading === request.id}
+                              >
+                                {actionLoading === request.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

@@ -16,6 +16,7 @@ import { getEmployees } from "../../../lib/services/employeeService";
 import { getLeaveRequests } from "../../../lib/services/leaveService";
 import { getAttendanceRecords } from "../../../lib/services/attendanceService";
 import { getPayrollData } from "../../../lib/services/payrollService";
+import { getPerformanceReviews } from "../../../lib/services/performanceService";
 
 const COLORS = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#6366f1"];
 
@@ -28,20 +29,23 @@ export default function ReportsPage() {
   const [leaves, setLeaves] = useState<any[]>([]);
   const [attendance, setAttendance] = useState<any[]>([]);
   const [payroll, setPayroll] = useState<any[]>([]);
+  const [performance, setPerformance] = useState<any[]>([]);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [empRes, leaveRes, attRes, payRes] = await Promise.all([
+      const [empRes, leaveRes, attRes, payRes, perfRes] = await Promise.all([
         getEmployees(),
         getLeaveRequests(),
         getAttendanceRecords(),
         getPayrollData(),
+        getPerformanceReviews(),
       ]);
       setEmployees(empRes);
       setLeaves(leaveRes);
       setAttendance(attRes);
       setPayroll(payRes);
+      setPerformance(perfRes);
     } catch (error: any) {
       toast.error("Failed to load report data: " + error.message);
     } finally {
@@ -121,6 +125,131 @@ export default function ReportsPage() {
     return `Tk ${value}`;
   };
 
+  const buildReport = (): { headers: string[]; rows: (string | number)[][]; filename: string } => {
+    const cutoff = new Date();
+    const days = timePeriod === "1month" ? 30 : timePeriod === "3months" ? 90 : timePeriod === "1year" ? 365 : 180;
+    cutoff.setDate(cutoff.getDate() - days);
+
+    const withinPeriod = (value?: string) => {
+      if (!value) return true;
+      const d = new Date(value);
+      if (isNaN(d.getTime())) return true;
+      return d >= cutoff;
+    };
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    if (reportType === "attendance") {
+      const headers = ["Employee ID", "Date", "Check In", "Check Out", "Status", "Hours"];
+      const rows = attendance
+        .filter((r) => withinPeriod(r.date))
+        .map((r) => [r.employee_id ?? "", r.date ?? "", r.check_in ?? "", r.check_out ?? "", r.status ?? "", r.hours ?? ""]);
+      return { headers, rows, filename: `attendance-report-${today}.csv` };
+    }
+
+    if (reportType === "leave") {
+      const headers = ["Employee ID", "Employee Name", "Type", "Start Date", "End Date", "Days", "Reason", "Status", "Applied Date"];
+      const rows = leaves
+        .filter((r) => withinPeriod(r.applied_date))
+        .map((r) => [
+          r.employee_id ?? "",
+          r.employee_name ?? "",
+          r.type ?? "",
+          r.start_date ?? "",
+          r.end_date ?? "",
+          r.days ?? "",
+          r.reason ?? "",
+          r.status ?? "",
+          r.applied_date ?? "",
+        ]);
+      return { headers, rows, filename: `leave-report-${today}.csv` };
+    }
+
+    if (reportType === "payroll") {
+      const headers = ["Employee ID", "Employee Name", "Month", "Basic Salary", "Allowances", "Deductions", "Net Salary", "Status", "Pay Date"];
+      const rows = payroll
+        .filter((r) => withinPeriod(r.pay_date))
+        .map((r) => [
+          r.employee_id ?? "",
+          r.employee_name ?? "",
+          r.month ?? "",
+          r.basic_salary ?? 0,
+          r.allowances ?? 0,
+          r.deductions ?? 0,
+          r.net_salary ?? 0,
+          r.status ?? "",
+          r.pay_date ?? "",
+        ]);
+      return { headers, rows, filename: `payroll-report-${today}.csv` };
+    }
+
+    const headers = [
+      "Employee ID",
+      "Employee Name",
+      "Period",
+      "Rating",
+      "Technical Skills",
+      "Communication",
+      "Teamwork",
+      "Leadership",
+      "Reviewer",
+      "Review Date",
+      "Comments",
+    ];
+    const rows = performance
+      .filter((r) => withinPeriod(r.review_date))
+      .map((r) => [
+        r.employee_id ?? "",
+        r.employee_name ?? "",
+        r.period ?? "",
+        r.rating ?? "",
+        r.technical_skills ?? "",
+        r.communication ?? "",
+        r.teamwork ?? "",
+        r.leadership ?? "",
+        r.reviewer ?? "",
+        r.review_date ?? "",
+        r.comments ?? "",
+      ]);
+    return { headers, rows, filename: `performance-report-${today}.csv` };
+  };
+
+  const toCsv = (headers: string[], rows: (string | number)[][]) => {
+    const escape = (val: string | number) => {
+      const s = String(val ?? "");
+      return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [headers.map(escape).join(",")];
+    for (const row of rows) lines.push(row.map(escape).join(","));
+    return lines.join("\r\n");
+  };
+
+  const downloadCsv = (content: string, filename: string) => {
+    const blob = new Blob(["﻿" + content], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportReport = () => {
+    if (loading) {
+      toast.info("Please wait, data is still loading...");
+      return;
+    }
+    const { headers, rows, filename } = buildReport();
+    if (rows.length === 0) {
+      toast.warning("No data available for the selected report and time period.");
+      return;
+    }
+    downloadCsv(toCsv(headers, rows), filename);
+    toast.success(`Report exported as ${filename}`);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -129,7 +258,7 @@ export default function ReportsPage() {
           <h1 className="text-3xl font-semibold text-gray-900">Reports & Analytics</h1>
           <p className="text-gray-600 mt-1">View detailed insights and export reports</p>
         </div>
-        <Button>
+        <Button onClick={handleExportReport} disabled={loading}>
           <Download className="w-4 h-4 mr-2" />
           Export Report
         </Button>

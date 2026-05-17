@@ -13,6 +13,7 @@ import {
   Shield,
 } from "lucide-react";
 import { cn } from "../ui/utils";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -26,14 +27,19 @@ const navigation = [
   { name: "Leave", href: "/leave/approval", icon: FileText },
   { name: "Payroll", href: "/payroll", icon: Landmark },
   { name: "Departments", href: "/departments", icon: Building2 },
-  { name: "Roles", href: "/roles", icon: Shield },
+  { name: "Roles", href: "/roles", icon: Shield, restrictedFor: ["HR"] },
   { name: "Performance", href: "/performance/reviews", icon: TrendingUp },
   { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "Settings", href: "/settings/profile", icon: Settings },
+  { name: "Settings", href: "/settings/profile", icon: Settings, restrictedFor: ["HR"] },
 ];
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const location = useLocation();
+  const { role, initials, user } = useAuth();
+  const userEmail = user?.email || "";
+  const visibleNavigation = navigation.filter(
+    (item) => !item.restrictedFor || !item.restrictedFor.includes(role)
+  );
 
   return (
     <>
@@ -77,7 +83,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-          {navigation.map((item) => {
+          {visibleNavigation.map((item) => {
             const isActive =
               location.pathname === item.href ||
               (item.href !== "/" && location.pathname.startsWith(item.href));
@@ -113,13 +119,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           <div className="p-4 border-t border-gray-200">
             <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold">
-                AJ
+                {initials}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  HR Admin
+                  {role}
                 </p>
-                <p className="text-xs text-gray-500 truncate">hr.admin@banglahr.com.bd</p>
+                <p className="text-xs text-gray-500 truncate">{userEmail}</p>
               </div>
             </div>
           </div>

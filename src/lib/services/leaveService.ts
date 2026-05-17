@@ -65,27 +65,44 @@ export async function getLeaveBalanceByEmployee(employeeId: string) {
     .from('leave_balances')
     .select('*')
     .eq('employee_id', employeeId)
-    .single()
+    .maybeSingle()
   if (error) throw error
-  return data as LeaveBalance
+  return data as LeaveBalance | null
 }
 
 export async function deductLeaveBalance(employeeId: string, leaveType: string, days: number) {
-  // First, get the current balance
-  const balance = await getLeaveBalanceByEmployee(employeeId);
-  
   // Map leave type to the correct column
-  let columnToUpdate = '';
+  let columnToUpdate: 'annual_leave' | 'sick_leave' | 'casual_leave' | '' = '';
   if (leaveType.toLowerCase().includes('annual')) columnToUpdate = 'annual_leave';
   else if (leaveType.toLowerCase().includes('sick')) columnToUpdate = 'sick_leave';
   else if (leaveType.toLowerCase().includes('casual')) columnToUpdate = 'casual_leave';
   else return; // Don't deduct for unpaid/parental etc if not in balance table
 
-  // Calculate new balance
-  const currentDays = balance[columnToUpdate as keyof LeaveBalance] as number;
+  const balance = await getLeaveBalanceByEmployee(employeeId);
+
+  // If there's no balance row yet for this employee, create one using schema defaults
+  // and subtract the requested days from the relevant column.
+  if (!balance) {
+    const defaults = { annual_leave: 20, sick_leave: 10, casual_leave: 5 };
+    const newRow = {
+      employee_id: employeeId,
+      annual_leave: Math.max(0, defaults.annual_leave - (columnToUpdate === 'annual_leave' ? days : 0)),
+      sick_leave: Math.max(0, defaults.sick_leave - (columnToUpdate === 'sick_leave' ? days : 0)),
+      casual_leave: Math.max(0, defaults.casual_leave - (columnToUpdate === 'casual_leave' ? days : 0)),
+    };
+    const { data, error } = await supabase
+      .from('leave_balances')
+      .insert(newRow)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as LeaveBalance;
+  }
+
+  // Calculate new balance and update
+  const currentDays = balance[columnToUpdate] as number;
   const newDays = Math.max(0, currentDays - days);
 
-  // Update
   const { data, error } = await supabase
     .from('leave_balances')
     .update({ [columnToUpdate]: newDays })
